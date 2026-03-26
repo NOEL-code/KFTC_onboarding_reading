@@ -15,6 +15,11 @@ public class CourseListResponse {
     public static class CourseItem {
         private Long courseId;
         private String name;
+        private String description;
         private String status;
+        private String startDate;
+        private String endDate;
+        private long totalUsers;
+        private long submittedUsers;
     }
 }

@@ -72,29 +72,40 @@ public class ReportService {
         courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
 
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<BookReport> reportPage = reportRepository.findByCourseId(courseId, pageable);
+        // 모든 수강생을 포함 (미제출자 포함) — User를 JOIN FETCH로 즉시 로딩
+        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseIdWithUser(courseId);
 
-        List<ReportListResponse.ReportSummary> summaries = reportPage.getContent().stream()
-                .map(r -> {
-                    User u = r.getEnrollment().getUser();
+        List<ReportListResponse.ReportSummary> allSummaries = enrollments.stream()
+                .map(e -> {
+                    BookReport report = reportRepository.findByEnrollmentId(e.getId()).orElse(null);
+                    User u = e.getUser();
+                    String reportStatus = report != null ? report.getStatus().name() : 미제출.name();
                     return ReportListResponse.ReportSummary.builder()
-                            .reportId(r.getId())
+                            .reportId(report != null ? report.getId() : null)
+                            .employeeNo(u.getEmployeeNo())
                             .name(u.getName())
                             .team(u.getTeam())
-                            .title(r.getTitle())
-                            .status(r.getStatus().name())
-                            .submittedAt(r.getSubmittedAt() != null ? r.getSubmittedAt().format(DATE_FMT) : null)
+                            .title(report != null ? report.getTitle() : null)
+                            .status(reportStatus)
+                            .submittedAt(report != null && report.getSubmittedAt() != null
+                                    ? report.getSubmittedAt().format(DATE_FMT) : null)
                             .build();
                 })
                 .toList();
 
+        // 페이지네이션
+        int totalPages = (int) Math.ceil((double) allSummaries.size() / size);
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, allSummaries.size());
+        List<ReportListResponse.ReportSummary> pageItems =
+                fromIndex < allSummaries.size() ? allSummaries.subList(fromIndex, toIndex) : List.of();
+
         return ReportListResponse.builder()
-                .totalCount(reportPage.getTotalElements())
+                .totalCount(allSummaries.size())
                 .page(page)
                 .size(size)
-                .totalPages(reportPage.getTotalPages())
-                .reports(summaries)
+                .totalPages(totalPages)
+                .reports(pageItems)
                 .build();
     }
 
@@ -208,8 +219,8 @@ public class ReportService {
 
     public AdminReportListResponse getAdminReports(Long courseId, String status, String team,
                                                     String name, int page, int size) {
-        // 전체 enrollment 조회 (해당 과정)
-        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        // 전체 enrollment 조회 (해당 과정) — User를 JOIN FETCH로 즉시 로딩
+        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseIdWithUser(courseId);
 
         // enrollment별로 report 매핑
         List<AdminReportListResponse.AdminReportItem> allItems = enrollments.stream()
@@ -220,6 +231,7 @@ public class ReportService {
                     return AdminReportListResponse.AdminReportItem.builder()
                             .reportId(report != null ? report.getId() : null)
                             .enrollmentId(e.getId())
+                            .employeeNo(u.getEmployeeNo())
                             .name(u.getName())
                             .team(u.getTeam())
                             .title(report != null ? report.getTitle() : null)
@@ -304,9 +316,10 @@ public class ReportService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "파일을 선택해주세요.");
         }
         String fileName = file.getOriginalFilename();
-        if (fileName == null || !fileName.toLowerCase().endsWith(".hwp")) {
+        String lower = fileName == null ? "" : fileName.toLowerCase();
+        if (!lower.endsWith(".hwp") && !lower.endsWith(".hwpx")) {
             throw new BusinessException(HttpStatus.BAD_REQUEST,
-                    "유효하지 않은 파일 형식입니다. .hwp 파일만 업로드 가능합니다.");
+                    "유효하지 않은 파일 형식입니다. .hwp 또는 .hwpx 파일만 업로드 가능합니다.");
         }
     }
 }

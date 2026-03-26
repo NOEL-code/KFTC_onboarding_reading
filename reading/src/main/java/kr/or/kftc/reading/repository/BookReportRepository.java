@@ -44,4 +44,9 @@ public interface BookReportRepository extends JpaRepository<BookReport, Long> {
             @Param("name") String name);
 
     boolean existsByEnrollment_CourseId(Long courseId);
+
+    @Query("SELECT COUNT(br) FROM BookReport br " +
+           "JOIN br.enrollment e " +
+           "WHERE e.course.id = :courseId AND br.status <> kr.or.kftc.reading.entity.ReportStatus.미제출")
+    long countSubmittedByCourseId(@Param("courseId") Long courseId);
 }

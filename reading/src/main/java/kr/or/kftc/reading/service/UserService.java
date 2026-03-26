@@ -35,7 +35,7 @@ public class UserService {
         ReadingCourse course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
 
-        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseIdWithUser(courseId);
 
         List<CourseUserItem> users = enrollments.stream()
                 .map(e -> {

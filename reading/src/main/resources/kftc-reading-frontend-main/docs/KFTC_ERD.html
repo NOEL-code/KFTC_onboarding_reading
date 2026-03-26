@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KFTC 독후감 제출 시스템 - ERD</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+        }
+        .header {
+            background: #1a365d;
+            color: white;
+            padding: 24px 40px;
+        }
+        .header h1 { font-size: 22px; font-weight: 600; }
+        .header p { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 32px 40px; }
+
+        .erd-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+        .erd-section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1a365d;
+        }
+        .mermaid { display: flex; justify-content: center; }
+        .mermaid svg { max-width: 100%; height: auto; }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+        }
+        .entity-card {
+            background: #fafbfc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            transition: box-shadow 0.2s;
+        }
+        .entity-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .entity-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .entity-card h3 .badge {
+            font-size: 11px;
+            font-weight: 500;
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .entity-card .desc {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 12px;
+        }
+        .entity-card table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .entity-card th {
+            text-align: left;
+            padding: 6px 8px;
+            background: #edf2f7;
+            color: #4a5568;
+            font-weight: 600;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .entity-card td {
+            padding: 5px 8px;
+            border-bottom: 1px solid #f0f2f5;
+            color: #4a5568;
+        }
+        .entity-card td:first-child { font-weight: 600; color: #2d3748; }
+        .pk { color: #d69e2e !important; font-size: 10px; }
+        .fk { color: #3182ce !important; font-size: 10px; }
+        .uk { color: #38a169 !important; font-size: 10px; }
+
+        .relations {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+        .relations h2 { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1a365d; }
+        .rel-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 13px;
+        }
+        .rel-item:last-child { border-bottom: none; }
+        .rel-label {
+            background: #ebf4ff;
+            color: #2b6cb0;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        .rel-arrow { color: #a0aec0; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>KFTC 독후감 제출 시스템 — ERD (Entity Relationship Diagram)</h1>
+        <p>Figma 디자인 및 기능 명세서 기반 데이터 모델링</p>
+    </div>
+
+    <div class="container">
+        <!-- Mermaid ERD -->
+        <div class="erd-section">
+            <h2>ER 다이어그램</h2>
+            <div class="mermaid">
+erDiagram
+    ADMIN {
+        bigint id PK
+        varchar login_id UK
+        varchar password
+        varchar name
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    USER {
+        bigint id PK
+        varchar employee_no UK
+        varchar name
+        varchar team
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    READING_COURSE {
+        bigint id PK
+        varchar name
+        date start_date
+        date end_date
+        text description
+        varchar status
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    COURSE_ENROLLMENT {
+        bigint id PK
+        bigint course_id FK
+        bigint user_id FK
+        timestamp created_at
+    }
+
+    BOOK_REPORT {
+        bigint id PK
+        bigint enrollment_id FK
+        varchar title
+        varchar file_name
+        longblob file_data
+        bigint file_size
+        varchar status
+        timestamp submitted_at
+        timestamp updated_at
+    }
+
+    REPORT_TEMPLATE {
+        bigint id PK
+        varchar file_name
+        longblob file_data
+        bigint file_size
+        bigint uploaded_by FK
+        varchar status
+        timestamp uploaded_at
+        timestamp updated_at
+    }
+
+    NOTICE {
+        bigint id PK
+        varchar title
+        text content
+        bigint created_by FK
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ADMIN ||--o{ REPORT_TEMPLATE : "업로드"
+    ADMIN ||--o{ NOTICE : "작성"
+    USER ||--o{ COURSE_ENROLLMENT : "신청"
+    READING_COURSE ||--o{ COURSE_ENROLLMENT : "포함"
+    COURSE_ENROLLMENT ||--o| BOOK_REPORT : "제출"
+            </div>
+        </div>
+
+        <!-- Relationships -->
+        <div class="relations">
+            <h2>관계 정의</h2>
+            <div class="rel-item">
+                <span class="rel-label">ADMIN</span>
+                <span class="rel-arrow">1 ──── 0..N</span>
+                <span class="rel-label">REPORT_TEMPLATE</span>
+                <span>관리자가 독후감 양식을 업로드/관리</span>
+            </div>
+            <div class="rel-item">
+                <span class="rel-label">ADMIN</span>
+                <span class="rel-arrow">1 ──── 0..N</span>
+                <span class="rel-label">NOTICE</span>
+                <span>관리자가 공지사항을 작성</span>
+            </div>
+            <div class="rel-item">
+                <span class="rel-label">USER</span>
+                <span class="rel-arrow">1 ──── 0..N</span>
+                <span class="rel-label">COURSE_ENROLLMENT</span>
+                <span>사용자가 독서과정에 신청 (반기별 복수 참여 가능)</span>
+            </div>
+            <div class="rel-item">
+                <span class="rel-label">READING_COURSE</span>
+                <span class="rel-arrow">1 ──── 0..N</span>
+                <span class="rel-label">COURSE_ENROLLMENT</span>
+                <span>하나의 독서과정에 여러 사용자 등록</span>
+            </div>
+            <div class="rel-item">
+                <span class="rel-label">COURSE_ENROLLMENT</span>
+                <span class="rel-arrow">1 ──── 0..1</span>
+                <span class="rel-label">BOOK_REPORT</span>
+                <span>과정 참여자 당 독후감 1건 제출 (파일 1개 제한)</span>
+            </div>
+        </div>
+
+        <!-- Entity Details -->
+        <div class="erd-section">
+            <h2>엔티티 상세 명세</h2>
+            <div class="legend">
+                <!-- ADMIN -->
+                <div class="entity-card">
+                    <h3>ADMIN <span class="badge">관리자</span></h3>
+                    <p class="desc">관리자 로그인 및 시스템 운영 (아이디/비밀번호 인증)</p>
+                    <table>
+                        <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
+                        <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>관리자 ID</td></tr>
+                        <tr><td>login_id</td><td>VARCHAR(50)</td><td><span class="uk">UK</span></td><td>로그인 아이디</td></tr>
+                        <tr><td>password</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>비밀번호 (bcrypt 암호화)</td></tr>
+                        <tr><td>name</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>관리자 이름</td></tr>
+                        <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>생성일시</td></tr>
+                        <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>수정일시</td></tr>
+                    </table>
+                </div>
+
+                <!-- USER -->
+                <div class="entity-card">
+                    <h3>USER <span class="badge">사용자</span></h3>
+                    <p class="desc">독서과정 참여자 (엑셀 일괄등록 또는 개별 추가)</p>
+                    <table>
+                        <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
+                        <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>사용자 ID</td></tr>
+                        <tr><td>employee_no</td><td>VARCHAR(20)</td><td><span class="uk">UK</span></td><td>사번</td></tr>
+                        <tr><td>name</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>이름</td></tr>
+                        <tr><td>team</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>팀 (IT개발팀, 인사팀 등)</td></tr>
+                        <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>생성일시</td></tr>
+                        <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>수정일시</td></tr>
+                    </table>
+                </div>
+
+                <!-- READING_COURSE -->
+                <div class="entity-card">
+                    <h3>READING_COURSE <span class="badge">독서과정</span></h3>
+                    <p class="desc">반기별 독서경영 과정 (진행중/완료 상태)</p>
+                    <table>
+                        <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
+                        <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>과정 ID</td></tr>
+                        <tr><td>name</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>과정명 (예: 26년 상반기)</td></tr>
+                        <tr><td>start_date</td><td>DATE</td><td>NOT NULL</td><td>시작일</td></tr>
+                        <tr><td>end_date</td><td>DATE</td><td>NOT NULL</td><td>종료일</td></tr>
+                        <tr><td>description</td><td>TEXT</td><td></td><td>과정 설명</td></tr>
+                        <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>진행중 / 완료</td></tr>
+                        <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>생성일시</td></tr>
+                        <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>수정일시</td></tr>
+                    </table>
+                </div>
+
+                <!-- COURSE_ENROLLMENT -->
+                <div class="entity-card">
+                    <h3>COURSE_ENROLLMENT <span class="badge">과정 신청</span></h3>
+                    <p class="desc">사용자-과정 간 다대다(M:N) 연결 테이블</p>
+                    <table>
+                        <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
+                        <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>신청 ID</td></tr>
+                        <tr><td>course_id</td><td>BIGINT</td><td><span class="fk">FK</span> NOT NULL</td><td>독서과정 ID</td></tr>
+                        <tr><td>user_id</td><td>BIGINT</td><td><span class="fk">FK</span> NOT NULL</td><td>사용자 ID</td></tr>
+                        <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>등록일시</td></tr>
+                    </table>
+                </div>
+
+                <!-- BOOK_REPORT -->
+                <div class="entity-card">
+                    <h3>BOOK_REPORT <span class="badge">독후감</span></h3>
+                    <p class="desc">과정 참여자가 제출하는 독후감 (hwp 파일 1개 제한)</p>
+                    <table>
+                        <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
+                        <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>독후감 ID</td></tr>
+                        <tr><td>enrollment_id</td><td>BIGINT</td><td><span class="fk">FK</span> UK</td><td>과정신청 ID (1:1)</td></tr>
+                        <tr><td>title</td><td>VARCHAR(200)</td><td></td><td>독후감 제목</td></tr>
+                        <tr><td>file_name</td><td>VARCHAR(255)</td><td></td><td>원본 hwp 파일명</td></tr>
+                        <tr><td>file_data</td><td>LONGBLOB</td><td></td><td>hwp 파일 바이너리 데이터</td></tr>
+                        <tr><td>file_size</td><td>BIGINT</td><td></td><td>파일 크기 (bytes)</td></tr>
+                        <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>미제출 / 제출 / 승인 / 보완</td></tr>
+                        <tr><td>submitted_at</td><td>TIMESTAMP</td><td></td><td>제출일시</td></tr>
+                        <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>수정일시</td></tr>
+                    </table>
+                </div>
+
+                <!-- REPORT_TEMPLATE -->
+                <div class="entity-card">
+                    <h3>REPORT_TEMPLATE <span class="badge">독후감 양식</span></h3>
+                    <p class="desc">모든 과정에 공통 적용되는 한글(hwp) 양식 파일</p>
+                    <table>
+                        <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
+                        <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>양식 ID</td></tr>
+                        <tr><td>file_name</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>원본 hwp 파일명</td></tr>
+                        <tr><td>file_data</td><td>LONGBLOB</td><td>NOT NULL</td><td>hwp 양식 파일 바이너리 데이터</td></tr>
+                        <tr><td>file_size</td><td>BIGINT</td><td></td><td>파일 크기</td></tr>
+                        <tr><td>uploaded_by</td><td>BIGINT</td><td><span class="fk">FK</span></td><td>업로드한 관리자</td></tr>
+                        <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>사용중 / 미사용</td></tr>
+                        <tr><td>uploaded_at</td><td>TIMESTAMP</td><td></td><td>업로드 일시</td></tr>
+                        <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>수정일시</td></tr>
+                    </table>
+                </div>
+
+                <!-- NOTICE -->
+                <div class="entity-card">
+                    <h3>NOTICE <span class="badge">공지사항</span></h3>
+                    <p class="desc">사용자 메인 페이지에 표시되는 공지사항</p>
+                    <table>
+                        <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
+                        <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>공지 ID</td></tr>
+                        <tr><td>title</td><td>VARCHAR(200)</td><td>NOT NULL</td><td>제목</td></tr>
+                        <tr><td>content</td><td>TEXT</td><td></td><td>내용</td></tr>
+                        <tr><td>created_by</td><td>BIGINT</td><td><span class="fk">FK</span></td><td>작성한 관리자</td></tr>
+                        <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>작성일시</td></tr>
+                        <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>수정일시</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#ebf4ff',
+                primaryBorderColor: '#3182ce',
+                primaryTextColor: '#1a365d',
+                lineColor: '#4a5568',
+                secondaryColor: '#f7fafc',
+                tertiaryColor: '#edf2f7',
+                fontSize: '13px'
+            },
+            er: {
+                diagramPadding: 30,
+                layoutDirection: 'TB',
+                minEntityWidth: 100,
+                minEntityHeight: 75,
+                entityPadding: 15,
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+</html>
