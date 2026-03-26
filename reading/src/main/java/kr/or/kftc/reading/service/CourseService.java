@@ -94,20 +94,6 @@ public class CourseService {
     }
 
     @Transactional
-    public Map<String, Object> updateCourseStatus(Long courseId, String status) {
-        ReadingCourse course = courseRepository.findById(courseId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
-
-        try {
-            course.setStatus(CourseStatus.valueOf(status));
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "유효하지 않은 상태값입니다: " + status);
-        }
-
-        return Map.of("courseId", course.getId(), "status", course.getStatus().name(), "message", "독서과정 상태가 변경되었습니다.");
-    }
-
-    @Transactional
     public void deleteCourse(Long courseId) {
         ReadingCourse course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));

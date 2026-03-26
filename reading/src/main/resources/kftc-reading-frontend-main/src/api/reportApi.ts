@@ -20,6 +20,10 @@ export function downloadReport(reportId: number, filename: string) {
     .then(({ data }) => ({ data, filename }));
 }
 
+export function deleteReport(reportId: number, employeeNo: string) {
+  return axios.delete(`/api/reports/${reportId}`, { params: { employeeNo } });
+}
+
 export function fetchCourseReports(courseId: string, size = 100) {
   return axios.get(`/api/courses/${courseId}/reports`, { params: { size } });
 }

@@ -3,7 +3,6 @@ package kr.or.kftc.reading.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.or.kftc.reading.dto.CourseCreateRequest;
-import kr.or.kftc.reading.dto.CourseStatusUpdateRequest;
 import kr.or.kftc.reading.dto.CourseUpdateRequest;
 import kr.or.kftc.reading.dto.MessageResponse;
 import kr.or.kftc.reading.service.CourseService;
@@ -34,14 +33,6 @@ public class AdminCourseController {
             @PathVariable Long courseId,
             @RequestBody CourseUpdateRequest request) {
         return ResponseEntity.ok(courseService.updateCourse(courseId, request));
-    }
-
-    @Operation(summary = "독서과정 상태 변경", description = "독서과정의 상태를 변경합니다. (진행중, 완료, 종료)")
-    @PatchMapping("/{courseId}/status")
-    public ResponseEntity<Map<String, Object>> updateCourseStatus(
-            @PathVariable Long courseId,
-            @RequestBody CourseStatusUpdateRequest request) {
-        return ResponseEntity.ok(courseService.updateCourseStatus(courseId, request.getStatus()));
     }
 
     @Operation(summary = "독서과정 삭제", description = "독서과정을 삭제합니다. 등록된 사용자가 있으면 삭제 불가합니다.")

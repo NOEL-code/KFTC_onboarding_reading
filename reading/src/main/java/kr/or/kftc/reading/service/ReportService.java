@@ -132,39 +132,6 @@ public class ReportService {
                 .build();
     }
 
-    public ReportSearchResponse searchReports(String employeeNo, String name) {
-        if ((employeeNo == null || employeeNo.isBlank()) && (name == null || name.isBlank())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "사번 또는 이름 중 하나는 필수입니다.");
-        }
-
-        List<BookReport> reports;
-        if (employeeNo != null && !employeeNo.isBlank() && name != null && !name.isBlank()) {
-            reports = reportRepository.findByUserEmployeeNoOrNameContaining(employeeNo, name);
-        } else if (employeeNo != null && !employeeNo.isBlank()) {
-            reports = reportRepository.findByUserEmployeeNo(employeeNo);
-        } else {
-            reports = reportRepository.findByUserNameContaining(name);
-        }
-
-        List<ReportSearchResponse.SearchResult> results = reports.stream()
-                .map(r -> {
-                    User u = r.getEnrollment().getUser();
-                    ReadingCourse c = r.getEnrollment().getCourse();
-                    return ReportSearchResponse.SearchResult.builder()
-                            .reportId(r.getId())
-                            .courseName(c.getName())
-                            .name(u.getName())
-                            .team(u.getTeam())
-                            .title(r.getTitle())
-                            .status(r.getStatus().name())
-                            .submittedAt(r.getSubmittedAt() != null ? r.getSubmittedAt().format(DATE_FMT) : null)
-                            .build();
-                })
-                .toList();
-
-        return ReportSearchResponse.builder().results(results).build();
-    }
-
     @Transactional
     public ReportResponse updateReport(Long reportId, String employeeNo, String title, MultipartFile file) {
         BookReport report = reportRepository.findById(reportId)
