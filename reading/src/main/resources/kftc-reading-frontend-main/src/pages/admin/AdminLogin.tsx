@@ -62,7 +62,7 @@ export default function AdminLogin() {
             KFTC
           </Typography>
           <Typography component="span" sx={{ fontSize: 14, color: '#666666' }}>
-            독후감 제출 시스템
+            독서과정
           </Typography>
         </Box>
       </Box>
@@ -113,7 +113,7 @@ export default function AdminLogin() {
               관리자 로그인
             </Typography>
             <Typography sx={{ fontSize: 14, color: '#888888' }}>
-              독후감 제출 시스템 관리자 페이지입니다.
+              독서과정 관리자 페이지입니다.
             </Typography>
           </Box>
 
