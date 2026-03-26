@@ -161,9 +161,7 @@ public class ReportService {
             throw new BusinessException(HttpStatus.FORBIDDEN, "본인의 독후감만 수정할 수 있습니다.");
         }
 
-        if (title != null && !title.isBlank()) {
-            report.setTitle(title);
-        }
+        report.setTitle(title);
 
         if (file != null && !file.isEmpty()) {
             validateHwpFile(file);

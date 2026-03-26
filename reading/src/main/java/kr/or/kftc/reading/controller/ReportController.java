@@ -58,7 +58,7 @@ public class ReportController {
     public ResponseEntity<ReportResponse> updateReport(
             @PathVariable Long reportId,
             @RequestParam String employeeNo,
-            @RequestParam(required = false) String title,
+            @RequestParam String title,
             @RequestParam(value = "file", required = false) MultipartFile file) {
         return ResponseEntity.ok(reportService.updateReport(reportId, employeeNo, title, file));
     }
