@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { fetchReportDetail, downloadReport } from '../../api/reportApi.ts';
 import InfoRow from '../../components/InfoRow.tsx';
 import { downloadFile } from '../../utils/downloadFile.ts';
 
@@ -21,16 +21,6 @@ interface ReportData {
   fileSize: string;
 }
 
-// ─── Sample fallback while API is unavailable ─────────────────────────────────
-
-const SAMPLE_REPORT: ReportData = {
-  courseName: '2026년 상반기 KFTC 독서경영 과정',
-  name: '홍길동',
-  dept: '디지털혁신부',
-  filename: '독후감_홍길동.hwp',
-  fileSize: '245 KB',
-};
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ReportView() {
@@ -39,39 +29,53 @@ export default function ReportView() {
   const location = useLocation();
   const stateCourseName = (location.state as { courseName?: string } | null)?.courseName;
 
-  const [report, setReport] = useState<ReportData>({
-    ...SAMPLE_REPORT,
-    courseName: stateCourseName ?? SAMPLE_REPORT.courseName,
-  });
+  const [report, setReport] = useState<ReportData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!reportId) return;
     let cancelled = false;
-    axios
-      .get(`/api/reports/${reportId}`)
+    setLoading(true);
+    fetchReportDetail(reportId)
       .then(({ data }) => {
         if (!cancelled) {
           setReport({
-            courseName: data.courseName ?? stateCourseName ?? SAMPLE_REPORT.courseName,
-            name:       data.employeeName ?? data.name ?? SAMPLE_REPORT.name,
-            dept:       data.team ?? data.dept ?? SAMPLE_REPORT.dept,
-            filename:   data.fileName ?? data.title ?? SAMPLE_REPORT.filename,
+            courseName: data.courseName ?? stateCourseName ?? '',
+            name:       String(data.name ?? ''),
+            dept:       String(data.team ?? ''),
+            filename:   String(data.fileName ?? data.title ?? ''),
             fileSize:   data.fileSize
               ? `${Math.round(Number(data.fileSize) / 1024)} KB`
-              : SAMPLE_REPORT.fileSize,
+              : '',
           });
         }
       })
-      .catch(() => { /* keep sample data */ });
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [reportId]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleFileDownload() {
-    if (!reportId) return;
-    axios
-      .get(`/api/reports/${reportId}/download`, { responseType: 'blob' })
+    if (!reportId || !report) return;
+    downloadReport(Number(reportId), report.filename)
       .then(({ data }) => downloadFile(data, report.filename))
       .catch(() => {});
+  }
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+        <Typography sx={{ fontSize: 14, color: '#888888' }}>불러오는 중...</Typography>
+      </Box>
+    );
+  }
+
+  if (!report) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+        <Typography sx={{ fontSize: 14, color: '#cc3333' }}>독후감 정보를 불러올 수 없습니다.</Typography>
+      </Box>
+    );
   }
 
   return (
@@ -142,9 +146,11 @@ export default function ReportView() {
           >
             {report.filename}
           </Typography>
-          <Typography sx={{ fontSize: 12, color: '#888888', whiteSpace: 'nowrap' }}>
-            ({report.fileSize})
-          </Typography>
+          {report.fileSize && (
+            <Typography sx={{ fontSize: 12, color: '#888888', whiteSpace: 'nowrap' }}>
+              ({report.fileSize})
+            </Typography>
+          )}
         </Box>
 
         {/* 5. Back link */}

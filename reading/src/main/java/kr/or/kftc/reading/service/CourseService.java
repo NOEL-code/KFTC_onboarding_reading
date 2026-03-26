@@ -28,11 +28,19 @@ public class CourseService {
     public CourseListResponse getAllCourses() {
         List<ReadingCourse> courses = courseRepository.findAllByOrderByStartDateDesc();
         List<CourseListResponse.CourseItem> items = courses.stream()
-                .map(c -> CourseListResponse.CourseItem.builder()
-                        .courseId(c.getId())
-                        .name(c.getName())
-                        .status(c.getStatus().name())
-                        .build())
+                .map(c -> {
+                    long totalUsers = enrollmentRepository.countByCourseId(c.getId());
+                    long submittedUsers = reportRepository.countSubmittedByCourseId(c.getId());
+                    return CourseListResponse.CourseItem.builder()
+                            .courseId(c.getId())
+                            .name(c.getName())
+                            .status(c.getStatus().name())
+                            .startDate(c.getStartDate().toString())
+                            .endDate(c.getEndDate().toString())
+                            .totalUsers(totalUsers)
+                            .submittedUsers(submittedUsers)
+                            .build();
+                })
                 .toList();
         return CourseListResponse.builder().courses(items).build();
     }

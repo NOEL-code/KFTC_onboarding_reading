@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.tsx';
 import AppHeader from '../components/AppHeader.tsx';
 import TabNavigation from '../components/TabNavigation.tsx';
 
@@ -20,14 +21,20 @@ function getActiveTab(pathname: string): string {
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const activeTab = getActiveTab(location.pathname);
+
+  function handleLogout() {
+    logout();
+    navigate('/admin/login');
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#f5f6f8' }}>
       <AppHeader
         variant="admin"
         adminName="관리자"
-        onLogout={() => navigate('/admin/login')}
+        onLogout={handleLogout}
       />
 
       <TabNavigation tabs={TABS} activeTab={activeTab} onTabClick={(path) => navigate(path)} />

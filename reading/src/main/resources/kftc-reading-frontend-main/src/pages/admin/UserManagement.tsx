@@ -10,7 +10,13 @@ import {
 } from '@mui/material';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
-import axios from 'axios';
+import {
+  fetchUsersByCourse,
+  createUsers,
+  updateUsers,
+  deleteUsers,
+  uploadUsersExcel,
+} from '../../api/userApi.ts';
 import DataTable from '../../components/DataTable.tsx';
 import type { Column } from '../../components/DataTable.tsx';
 import ConfirmModal from '../../components/ConfirmModal.tsx';
@@ -119,15 +125,15 @@ export default function UserManagement() {
 
   useEffect(() => {
     if (!selectedCourseId) return;
-    axios
-      .get('/api/admin/users', { params: { courseId: selectedCourseId } })
+    fetchUsersByCourse(selectedCourseId)
       .then(({ data }) => {
-        const list: User[] = (data.users ?? data.content ?? (Array.isArray(data) ? data : [])).map(
+        const raw = data.users ?? data.content ?? (Array.isArray(data) ? data : []);
+        const list: User[] = raw.map(
           (u: Record<string, unknown>) => ({
-            id:         u.userId ?? u.id,
-            employeeNo: u.employeeNo,
-            name:       u.name,
-            dept:       u.team ?? u.dept ?? '',
+            id:         Number(u.userId ?? u.id),
+            employeeNo: String(u.employeeNo ?? ''),
+            name:       String(u.name ?? ''),
+            dept:       String(u.team ?? ''),
           })
         );
         setRows(list);
@@ -178,10 +184,7 @@ export default function UserManagement() {
     const newUser: User = { id: Date.now(), ...form };
     setRows((prev) => [newUser, ...prev]);
     setAddOpen(false);
-    axios
-      .post('/api/admin/users', {
-        users: [{ employeeNo: form.employeeNo, name: form.name, team: form.dept, courseId: Number(selectedCourseId) }],
-      })
+    createUsers([{ courseId: Number(selectedCourseId), employeeNo: form.employeeNo, name: form.name, team: form.dept }])
       .catch(() => {});
   }
 
@@ -189,11 +192,7 @@ export default function UserManagement() {
     if (!editUser) return;
     setRows((prev) => prev.map((r) => (r.id === editUser.id ? { ...r, ...form } : r)));
     setEditUser(null);
-    axios
-      .put('/api/admin/users', {
-        courseId: Number(selectedCourseId),
-        users: [{ userId: editUser.id, name: form.name, team: form.dept }],
-      })
+    updateUsers(Number(selectedCourseId), [{ userId: editUser.id, name: form.name, team: form.dept }])
       .catch(() => {});
   }
 
@@ -202,10 +201,7 @@ export default function UserManagement() {
     setRows((prev) => prev.filter((r) => r.id !== deleteUser.id));
     setSelected((prev) => { const n = new Set(prev); n.delete(deleteUser.id); return n; });
     setDeleteUser(null);
-    axios
-      .delete('/api/admin/users', {
-        data: { courseId: Number(selectedCourseId), userIds: [deleteUser.id] },
-      })
+    deleteUsers(Number(selectedCourseId), [deleteUser.id])
       .catch(() => {});
   }
 
@@ -214,10 +210,7 @@ export default function UserManagement() {
     setRows((prev) => prev.filter((r) => !selected.has(r.id)));
     setSelected(new Set());
     setDeleteBulkOpen(false);
-    axios
-      .delete('/api/admin/users', {
-        data: { courseId: Number(selectedCourseId), userIds: idsToDelete },
-      })
+    deleteUsers(Number(selectedCourseId), idsToDelete)
       .catch(() => {});
   }
 
@@ -226,22 +219,16 @@ export default function UserManagement() {
   useEffect(() => {
     if (!excelFile || excelUploadingRef.current || !selectedCourseId) return;
     excelUploadingRef.current = true;
-    const formData = new FormData();
-    formData.append('courseId', selectedCourseId);
-    formData.append('file', excelFile);
-    axios
-      .post('/api/admin/users/upload', formData)
+    uploadUsersExcel(selectedCourseId, excelFile)
+      .then(() => fetchUsersByCourse(selectedCourseId))
       .then(({ data }) => {
-        // Reload user list after successful upload
-        return axios.get('/api/admin/users', { params: { courseId: selectedCourseId } });
-      })
-      .then(({ data }) => {
-        const list: User[] = (data.users ?? data.content ?? (Array.isArray(data) ? data : [])).map(
+        const raw = data.users ?? data.content ?? (Array.isArray(data) ? data : []);
+        const list: User[] = raw.map(
           (u: Record<string, unknown>) => ({
-            id:         u.userId ?? u.id,
-            employeeNo: u.employeeNo,
-            name:       u.name,
-            dept:       u.team ?? u.dept ?? '',
+            id:         Number(u.userId ?? u.id),
+            employeeNo: String(u.employeeNo ?? ''),
+            name:       String(u.name ?? ''),
+            dept:       String(u.team ?? ''),
           })
         );
         setRows(list);

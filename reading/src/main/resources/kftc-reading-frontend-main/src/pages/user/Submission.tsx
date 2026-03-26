@@ -9,7 +9,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import { fetchEmployee } from '../../api/userApi.ts';
+import { submitReport, updateReport } from '../../api/reportApi.ts';
 import FileDropzone from '../../components/FileDropzone.tsx';
 import FormField from '../../components/FormField.tsx';
 import InfoRow from '../../components/InfoRow.tsx';
@@ -63,11 +64,10 @@ export default function Submission() {
     const timer = setTimeout(() => {
       setEmpLoading(true);
       setEmpError('');
-      axios
-        .get(`/api/employees/${trimmed}`)
+      fetchEmployee(trimmed)
         .then(({ data }) => {
-          setEmpName(data.name ?? data.employeeName ?? '');
-          setEmpDept(data.dept ?? data.team ?? '');
+          setEmpName(String(data.name ?? ''));
+          setEmpDept(String(data.team ?? ''));
         })
         .catch(() => {
           setEmpName('');
@@ -98,9 +98,9 @@ export default function Submission() {
       formData.append('courseId', courseId);
 
       if (isUpdate) {
-        await axios.put(`/api/reports/${userId}`, formData);
+        await updateReport(userId!, formData);
       } else {
-        await axios.post('/api/reports', formData);
+        await submitReport(formData);
       }
       navigate(-1);
     } catch {

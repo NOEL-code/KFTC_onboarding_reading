@@ -9,7 +9,12 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import axios from 'axios';
+import {
+  fetchAdminTemplates,
+  uploadTemplate,
+  downloadAdminTemplate,
+  deleteTemplate,
+} from '../../api/templateApi.ts';
 import ConfirmModal from '../../components/ConfirmModal.tsx';
 import PageHeader from '../../components/PageHeader.tsx';
 import { downloadFile } from '../../utils/downloadFile.ts';
@@ -64,8 +69,7 @@ export default function TemplateManagement() {
   // ── Load current template ───────────────────────────────────────────────────
 
   useEffect(() => {
-    axios
-      .get('/api/admin/templates')
+    fetchAdminTemplates()
       .then(({ data }) => {
         const info = Array.isArray(data)
           ? (data.find((t: TemplateInfo) => t.status === '사용중') ?? data[0])
@@ -80,10 +84,7 @@ export default function TemplateManagement() {
   function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    axios
-      .post('/api/admin/templates', formData)
+    uploadTemplate(file)
       .then(({ data }) => setTemplate(data))
       .catch(() => {});
     e.target.value = '';
@@ -91,16 +92,14 @@ export default function TemplateManagement() {
 
   function handleDownload() {
     if (!template) return;
-    axios
-      .get(`/api/admin/templates/${template.templateId}/download`, { responseType: 'blob' })
+    downloadAdminTemplate(template.templateId)
       .then(({ data }) => downloadFile(data, template.fileName))
       .catch(() => {});
   }
 
   function handleDeleteConfirm() {
     if (!template) return;
-    axios
-      .delete(`/api/admin/templates/${template.templateId}`)
+    deleteTemplate(template.templateId)
       .then(() => setTemplate(null))
       .catch(() => {});
     setDeleteOpen(false);

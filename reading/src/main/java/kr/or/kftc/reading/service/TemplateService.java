@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -70,5 +71,22 @@ public class TemplateService {
     public ReportTemplate getActiveTemplate() {
         return templateRepository.findByStatus("사용중")
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "사용 가능한 양식이 없습니다."));
+    }
+
+    public List<Map<String, Object>> getTemplateInfoList() {
+        return templateRepository.findAll().stream()
+                .map(t -> Map.<String, Object>of(
+                        "templateId", t.getId(),
+                        "fileName", t.getFileName(),
+                        "fileSize", t.getFileSize(),
+                        "status", t.getStatus(),
+                        "uploadedAt", t.getUploadedAt() != null ? t.getUploadedAt().toString() : ""
+                ))
+                .toList();
+    }
+
+    public ReportTemplate getTemplateById(Long templateId) {
+        return templateRepository.findById(templateId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "양식을 찾을 수 없습니다."));
     }
 }

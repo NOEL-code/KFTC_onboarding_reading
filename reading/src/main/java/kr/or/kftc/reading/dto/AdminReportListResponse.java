@@ -29,6 +29,7 @@ public class AdminReportListResponse {
     public static class AdminReportItem {
         private Long reportId;
         private Long enrollmentId;
+        private String employeeNo;
         private String name;
         private String team;
         private String title;

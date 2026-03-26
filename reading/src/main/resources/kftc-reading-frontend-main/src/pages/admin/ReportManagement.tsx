@@ -9,7 +9,12 @@ import {
   Pagination,
 } from '@mui/material';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
-import axios from 'axios';
+import {
+  fetchAdminReports,
+  approveReports,
+  supplementReports,
+  downloadAdminReport,
+} from '../../api/reportApi.ts';
 import DataTable from '../../components/DataTable.tsx';
 import type { Column } from '../../components/DataTable.tsx';
 import StatusBadge from '../../components/StatusBadge.tsx';
@@ -40,21 +45,6 @@ interface SummaryCounts {
   '미제출': number;
 }
 
-// ─── Sample data (fallback while API is unavailable) ─────────────────────────
-
-const SAMPLE_DATA: Report[] = [
-  { id: 1,  employeeNo: '2410001', name: '김민준', dept: '기획팀',    title: '26년상반기_김민준_2410001.hwp', submittedAt: '2026-03-10', status: '승인'  },
-  { id: 2,  employeeNo: '2310042', name: '이서연', dept: '개발팀',    title: '26년상반기_이서연_2310042.hwp', submittedAt: '2026-03-11', status: '제출'  },
-  { id: 3,  employeeNo: '2208017', name: '박지후', dept: '마케팅팀',  title: '26년상반기_박지후_2208017.hwp', submittedAt: '2026-03-12', status: '보완'  },
-  { id: 4,  employeeNo: '2115033', name: '최수아', dept: '인사팀',    title: '',                             submittedAt: '—',          status: '미제출' },
-  { id: 5,  employeeNo: '2007008', name: '정도윤', dept: '개발팀',    title: '26년상반기_정도윤_2007008.hwp', submittedAt: '2026-03-09', status: '승인'  },
-  { id: 6,  employeeNo: '1923055', name: '강하은', dept: '기획팀',    title: '26년상반기_강하은_1923055.hwp', submittedAt: '2026-03-13', status: '승인'  },
-  { id: 7,  employeeNo: '2312019', name: '윤시우', dept: '마케팅팀',  title: '26년상반기_윤시우_2312019.hwp', submittedAt: '2026-03-14', status: '제출'  },
-  { id: 8,  employeeNo: '2201004', name: '장예린', dept: '인사팀',    title: '26년상반기_장예린_2201004.hwp', submittedAt: '2026-03-08', status: '승인'  },
-  { id: 9,  employeeNo: '2409027', name: '임준서', dept: '개발팀',    title: '',                             submittedAt: '—',          status: '미제출' },
-  { id: 10, employeeNo: '2106011', name: '한소율', dept: '기획팀',    title: '26년상반기_한소율_2106011.hwp', submittedAt: '2026-03-15', status: '보완'  },
-];
-
 const INITIAL_SUMMARY: SummaryCounts = {
   total: 0, '제출': 0, '승인': 0, '보완': 0, '미제출': 0,
 };
@@ -82,7 +72,7 @@ function filterOptionToStatus(opt: StatusFilterOption): ReportStatus | null {
 export default function ReportManagement() {
   const { selectedCourseId } = useCourse();
 
-  const [rows, setRows]               = useState<Report[]>(SAMPLE_DATA);
+  const [rows, setRows]               = useState<Report[]>([]);
   const [page, setPage]               = useState(1);
   const [selected, setSelected]       = useState<Set<number>>(new Set());
   const [summaryCounts, setSummaryCounts] = useState<SummaryCounts>(INITIAL_SUMMARY);
@@ -114,29 +104,26 @@ export default function ReportManagement() {
       const statusParam = statusFilter === '모두' ? undefined : filterOptionToStatus(statusFilter);
 
       try {
-        const { data } = await axios.get('/api/admin/reports', {
-          params: {
-            courseId: selectedCourseId,
-            page,
-            status: statusParam ?? undefined,
-            name:   searchQuery || undefined,
-          },
+        const { data } = await fetchAdminReports({
+          courseId: selectedCourseId,
+          page,
+          status: statusParam ?? undefined,
+          name:   searchQuery || undefined,
         });
         if (!cancelled) {
-          const items: Report[] = (data.reports ?? data.items ?? (Array.isArray(data) ? data : [])).map(
+          const items: Report[] = (data.reports ?? []).map(
             (r: Record<string, unknown>) => ({
-              id:          r.reportId ?? r.id,
-              employeeNo:  r.employeeNo,
-              name:        r.employeeName ?? r.name,
-              dept:        r.team ?? r.dept,
-              title:       r.title ?? '',
+              id:          Number(r.reportId ?? r.id ?? 0),
+              employeeNo:  String(r.employeeNo ?? ''),
+              name:        String(r.name ?? ''),
+              dept:        String(r.team ?? ''),
+              title:       String(r.title ?? ''),
               submittedAt: r.submittedAt ? String(r.submittedAt).slice(0, 10) : '—',
-              status:      r.status as ReportStatus,
+              status:      (r.status ?? '미제출') as ReportStatus,
             })
           );
-          if (items.length > 0) setRows(items);
+          setRows(items);
 
-          // Update summary counts from API
           const summary = data.summary;
           if (summary) {
             setSummaryCounts({
@@ -149,7 +136,7 @@ export default function ReportManagement() {
           }
         }
       } catch {
-        // API not available yet — keep sample data
+        // API error
       }
     }
 
@@ -210,7 +197,7 @@ export default function ReportManagement() {
     });
     try {
       if (idsToApprove.length > 0) {
-        await axios.patch('/api/admin/reports/approve', { reportIds: idsToApprove });
+        await approveReports(idsToApprove);
         setRows((prev) =>
           prev.map((r) => idsToApprove.includes(r.id) ? { ...r, status: '승인' as ReportStatus } : r)
         );
@@ -228,7 +215,7 @@ export default function ReportManagement() {
       const row = rows.find((r) => r.id === id);
       if (!row || row.status === '미제출') continue;
       try {
-        const { data } = await axios.get(`/api/admin/reports/${id}/download`, { responseType: 'blob' });
+        const { data } = await downloadAdminReport(id);
         downloadFile(data, row.title);
       } catch { /* noop */ }
     }
@@ -239,7 +226,7 @@ export default function ReportManagement() {
   async function handleRevisionConfirm() {
     if (!revisionRow) return;
     try {
-      await axios.patch('/api/admin/reports/supplement', { reportIds: [revisionRow.id], reason: revisionReason });
+      await supplementReports([revisionRow.id], revisionReason);
       setRows((prev) =>
         prev.map((r) => r.id === revisionRow.id ? { ...r, status: '보완' as ReportStatus } : r)
       );
@@ -251,8 +238,7 @@ export default function ReportManagement() {
   // ── File download ──────────────────────────────────────────────────────────
 
   function handleFileDownload(reportId: number, filename: string) {
-    axios
-      .get(`/api/admin/reports/${reportId}/download`, { responseType: 'blob' })
+    downloadAdminReport(reportId)
       .then(({ data }) => downloadFile(data, filename))
       .catch(() => {});
   }

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchCourses } from '../api/courseApi.ts';
 
 export interface Course {
   id: number;
@@ -22,12 +22,16 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
   const [selectedCourseId, setSelectedCourseId] = useState('');
 
   useEffect(() => {
-    axios
-      .get('/api/courses')
+    fetchCourses()
       .then(({ data }) => {
-        const list: Course[] = Array.isArray(data)
-          ? data
-          : (data.courses ?? data.content ?? []);
+        const raw = data.courses ?? data.content ?? (Array.isArray(data) ? data : []);
+        const list: Course[] = raw.map((c: Record<string, unknown>) => ({
+          id:        Number(c.courseId ?? c.id),
+          name:      String(c.name ?? ''),
+          status:    (c.status ?? '진행중') as Course['status'],
+          startDate: c.startDate ? String(c.startDate) : undefined,
+          endDate:   c.endDate ? String(c.endDate) : undefined,
+        }));
         if (list.length > 0) {
           setCourses(list);
         }

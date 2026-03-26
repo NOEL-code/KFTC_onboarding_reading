@@ -15,7 +15,8 @@ import {
 } from '@mui/material';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import { fetchCourseDetail } from '../../api/courseApi.ts';
+import { fetchCourseReports, downloadReport } from '../../api/reportApi.ts';
 import StatusBadge from '../../components/StatusBadge.tsx';
 import ConfirmModal from '../../components/ConfirmModal.tsx';
 
@@ -99,8 +100,7 @@ export default function ParticipantList() {
     if (!courseId) return;
 
     // Fetch course details
-    axios
-      .get(`/api/courses/${courseId}`)
+    fetchCourseDetail(courseId)
       .then(({ data }) => {
         setCourseInfo({
           name:    data.name ?? '과정',
@@ -110,14 +110,11 @@ export default function ParticipantList() {
       .catch(() => {});
 
     // Fetch participant / report list
-    axios
-      .get(`/api/courses/${courseId}/reports`, { params: { size: 100 } })
+    fetchCourseReports(courseId)
       .then(({ data }) => {
-        const list: Participant[] = (
-          data.reports ?? data.content ?? (Array.isArray(data) ? data : [])
-        ).map((r: Record<string, unknown>) => {
+        const reports = data.reports ?? data.content ?? (Array.isArray(data) ? data : []);
+        const list: Participant[] = reports.map((r: Record<string, unknown>) => {
           const rawStatus = String(r.status ?? '미제출');
-          // Normalize status values from API to UI labels
           const statusMap: Record<string, ParticipantStatus> = {
             '미제출': '미제출',
             '제출':   '제출완료',
@@ -125,10 +122,10 @@ export default function ParticipantList() {
             '보완':   '보완',
           };
           return {
-            id:         Number(r.reportId ?? r.id),
+            id:         Number(r.reportId ?? r.id ?? 0),
             employeeNo: String(r.employeeNo ?? ''),
-            name:       String(r.employeeName ?? r.name ?? ''),
-            dept:       String(r.team ?? r.dept ?? ''),
+            name:       String(r.name ?? ''),
+            dept:       String(r.team ?? ''),
             filename:   r.title ? String(r.title) : undefined,
             status:     statusMap[rawStatus] ?? '미제출',
           };
@@ -161,8 +158,7 @@ export default function ParticipantList() {
 
   function handleDownloadConfirm() {
     if (!downloadTarget?.filename) return;
-    axios
-      .get(`/api/reports/${downloadTarget.id}/download`, { responseType: 'blob' })
+    downloadReport(downloadTarget.id, downloadTarget.filename!)
       .then(({ data }) => {
         const url = URL.createObjectURL(data);
         const a = document.createElement('a');

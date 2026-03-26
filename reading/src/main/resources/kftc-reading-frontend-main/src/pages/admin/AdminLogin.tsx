@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { login as loginApi } from '../../api/authApi.ts';
 import { useAuth } from '../../context/AuthContext.tsx';
 
 export default function AdminLogin() {
@@ -29,7 +29,7 @@ export default function AdminLogin() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await axios.post('/api/admin/login', { loginId: username, password });
+      const { data } = await loginApi(username, password);
       login(data?.token ?? 'authenticated');
       navigate(from, { replace: true });
     } catch {

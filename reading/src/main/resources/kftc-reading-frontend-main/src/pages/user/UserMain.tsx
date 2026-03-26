@@ -8,7 +8,8 @@ import {
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { fetchCourses } from '../../api/courseApi.ts';
+import { fetchTemplateInfo, downloadTemplate } from '../../api/templateApi.ts';
 import StatusBadge from '../../components/StatusBadge.tsx';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -20,13 +21,18 @@ interface Course {
   period: string;
 }
 
-// ─── Sample fallback data ─────────────────────────────────────────────────────
+interface TemplateInfo {
+  fileName: string;
+  fileSize: string;
+  uploadedAt: string;
+}
 
-const SAMPLE_COURSES: Course[] = [
-  { id: 1, name: '26년 상반기', status: '진행중', period: '2026.01 ~ 2026.06' },
-  { id: 2, name: '25년 하반기', status: '완료',   period: '2025.07 ~ 2025.12' },
-  { id: 3, name: '25년 상반기', status: '완료',   period: '2025.01 ~ 2025.06' },
-];
+function formatFileSize(bytes: number): string {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 // ─── Section card wrapper ─────────────────────────────────────────────────────
 
@@ -57,24 +63,21 @@ function SectionCard({ title, children }: { title: string; children: React.React
 
 export default function UserMain() {
   const navigate = useNavigate();
-  const [courses, setCourses]           = useState<Course[]>(SAMPLE_COURSES);
-  const [downloadError, setDownloadError] = useState('');
+  const [courses, setCourses]               = useState<Course[]>([]);
+  const [templateInfo, setTemplateInfo]     = useState<TemplateInfo | null>(null);
+  const [downloadError, setDownloadError]   = useState('');
 
   // ── Fetch recent courses (3 most recent) ───────────────────────────────────
 
   useEffect(() => {
-    axios
-      .get('/api/courses')
+    fetchCourses()
       .then(({ data }) => {
-        const rawList = Array.isArray(data)
-          ? data
-          : (data.courses ?? data.content ?? []);
-        if (rawList.length === 0) return;
+        const rawList = data.courses ?? data.content ?? (Array.isArray(data) ? data : []);
         const list: Course[] = rawList.map((c: Record<string, unknown>) => {
           const start = String(c.startDate ?? '').slice(0, 7).replace('-', '.');
           const end   = String(c.endDate   ?? '').slice(0, 7).replace('-', '.');
           return {
-            id:     Number(c.id),
+            id:     Number(c.courseId ?? c.id),
             name:   String(c.name),
             status: (c.status ?? '완료') as '진행중' | '완료' | '종료',
             period: start && end ? `${start} ~ ${end}` : '',
@@ -83,20 +86,30 @@ export default function UserMain() {
         const sorted = [...list].sort((a, b) => b.id - a.id).slice(0, 3);
         setCourses(sorted);
       })
-      .catch(() => { /* keep sample data */ });
+      .catch(() => {});
+
+    fetchTemplateInfo()
+      .then(({ data }) => {
+        const dateStr = data.uploadedAt ? String(data.uploadedAt).slice(0, 10).replace(/-/g, '.') : '';
+        setTemplateInfo({
+          fileName:   String(data.fileName ?? ''),
+          fileSize:   formatFileSize(Number(data.fileSize ?? 0)),
+          uploadedAt: dateStr,
+        });
+      })
+      .catch(() => {});
   }, []);
 
   // ── Download handler ───────────────────────────────────────────────────────
 
   function handleDownload() {
     setDownloadError('');
-    axios
-      .get('/api/templates/download', { responseType: 'blob' })
+    downloadTemplate()
       .then(({ data }) => {
         const url = URL.createObjectURL(data);
         const a = document.createElement('a');
         a.href = url;
-        a.download = '독후감_제출양식_v2.1.hwp';
+        a.download = templateInfo?.fileName ?? '독후감_제출양식.hwp';
         a.click();
         URL.revokeObjectURL(url);
       })
@@ -149,11 +162,15 @@ export default function UserMain() {
             </Box>
             <Box>
               <Typography sx={{ fontSize: 14, fontWeight: 500, color: '#222222' }}>
-                독후감_제출양식_v2.1.hwp
+                {templateInfo?.fileName ?? '양식 파일'}
               </Typography>
-              <Typography sx={{ fontSize: 12, color: '#888888', mt: 0.25 }}>
-                최종 수정: 2026.02.28 | 32 KB
-              </Typography>
+              {templateInfo && (
+                <Typography sx={{ fontSize: 12, color: '#888888', mt: 0.25 }}>
+                  {templateInfo.uploadedAt && `최종 수정: ${templateInfo.uploadedAt}`}
+                  {templateInfo.uploadedAt && templateInfo.fileSize && ' | '}
+                  {templateInfo.fileSize}
+                </Typography>
+              )}
             </Box>
           </Box>
 

@@ -9,7 +9,12 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import axios from 'axios';
+import {
+  fetchCourses,
+  createCourse as createCourseApi,
+  updateCourse as updateCourseApi,
+  deleteCourse as deleteCourseApi,
+} from '../../api/courseApi.ts';
 import StatusBadge from '../../components/StatusBadge.tsx';
 import ConfirmModal from '../../components/ConfirmModal.tsx';
 import FormDialog from '../../components/FormDialog.tsx';
@@ -203,21 +208,21 @@ export default function CourseManagement() {
   const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
-    axios
-      .get('/api/courses')
+    fetchCourses()
       .then(({ data }) => {
-        const list: Course[] = (data.courses ?? data.content ?? (Array.isArray(data) ? data : [])).map(
+        const raw = data.courses ?? data.content ?? (Array.isArray(data) ? data : []);
+        const list: Course[] = raw.map(
           (c: Record<string, unknown>) => ({
-            id:             Number(c.id ?? c.courseId),
-            name:           String(c.name),
+            id:             Number(c.courseId ?? c.id),
+            name:           String(c.name ?? ''),
             status:         (c.status ?? '진행중') as CourseStatus,
-            startDate:      String(c.startDate ?? '').slice(0, 7),
-            endDate:        String(c.endDate   ?? '').slice(0, 7),
+            startDate:      String(c.startDate ?? ''),
+            endDate:        String(c.endDate   ?? ''),
             totalUsers:     Number(c.totalUsers     ?? 0),
             submittedUsers: Number(c.submittedUsers ?? 0),
           })
         );
-        if (list.length > 0) setCourses(list);
+        setCourses(list);
       })
       .catch(() => {});
   }, []);
@@ -252,7 +257,7 @@ export default function CourseManagement() {
     setCourses((prev) => [newCourse, ...prev]);
     setCreateOpen(false);
     setFormError('');
-    axios.post('/api/admin/courses', form).catch(() => {});
+    createCourseApi(form).catch(() => {});
   }
 
   function handleEdit(form: CourseForm) {
@@ -269,14 +274,14 @@ export default function CourseManagement() {
     );
     setEditCourse(null);
     setFormError('');
-    axios.put(`/api/admin/courses/${editCourse.id}`, form).catch(() => {});
+    updateCourseApi(editCourse.id, form).catch(() => {});
   }
 
   function handleDeleteConfirm() {
     if (!deleteCourse) return;
     setCourses((prev) => prev.filter((c) => c.id !== deleteCourse.id));
     setDeleteCourse(null);
-    axios.delete(`/api/admin/courses/${deleteCourse.id}`).catch(() => {});
+    deleteCourseApi(deleteCourse.id).catch(() => {});
   }
 
   function openCreate() {

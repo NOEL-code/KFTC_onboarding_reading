@@ -1,8 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 
-// TODO: 개발 확인용 — 배포 전 false로 변경
-const DEV_BYPASS = true;
+const DEV_BYPASS = false;
 
 /**
  * Wraps admin routes. Redirects to /admin/login if not authenticated,

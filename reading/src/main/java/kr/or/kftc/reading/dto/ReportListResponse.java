@@ -18,6 +18,7 @@ public class ReportListResponse {
     @Builder
     public static class ReportSummary {
         private Long reportId;
+        private String employeeNo;
         private String name;
         private String team;
         private String title;

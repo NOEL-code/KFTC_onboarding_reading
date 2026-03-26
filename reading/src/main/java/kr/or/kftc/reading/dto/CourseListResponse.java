@@ -16,5 +16,9 @@ public class CourseListResponse {
         private Long courseId;
         private String name;
         private String status;
+        private String startDate;
+        private String endDate;
+        private long totalUsers;
+        private long submittedUsers;
     }
 }

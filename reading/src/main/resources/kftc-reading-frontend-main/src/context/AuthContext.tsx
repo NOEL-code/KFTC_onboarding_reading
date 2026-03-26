@@ -46,3 +46,18 @@ const stored = localStorage.getItem(TOKEN_KEY);
 if (stored) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${stored}`;
 }
+
+// 401 응답 시 토큰 만료 처리 — 자동 로그아웃
+axios.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      delete axios.defaults.headers.common['Authorization'];
+      if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+        window.location.href = '/admin/login';
+      }
+    }
+    return Promise.reject(error);
+  },
+);

@@ -72,29 +72,40 @@ public class ReportService {
         courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
 
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<BookReport> reportPage = reportRepository.findByCourseId(courseId, pageable);
+        // 모든 수강생을 포함 (미제출자 포함)
+        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
 
-        List<ReportListResponse.ReportSummary> summaries = reportPage.getContent().stream()
-                .map(r -> {
-                    User u = r.getEnrollment().getUser();
+        List<ReportListResponse.ReportSummary> allSummaries = enrollments.stream()
+                .map(e -> {
+                    BookReport report = reportRepository.findByEnrollmentId(e.getId()).orElse(null);
+                    User u = e.getUser();
+                    String reportStatus = report != null ? report.getStatus().name() : 미제출.name();
                     return ReportListResponse.ReportSummary.builder()
-                            .reportId(r.getId())
+                            .reportId(report != null ? report.getId() : null)
+                            .employeeNo(u.getEmployeeNo())
                             .name(u.getName())
                             .team(u.getTeam())
-                            .title(r.getTitle())
-                            .status(r.getStatus().name())
-                            .submittedAt(r.getSubmittedAt() != null ? r.getSubmittedAt().format(DATE_FMT) : null)
+                            .title(report != null ? report.getTitle() : null)
+                            .status(reportStatus)
+                            .submittedAt(report != null && report.getSubmittedAt() != null
+                                    ? report.getSubmittedAt().format(DATE_FMT) : null)
                             .build();
                 })
                 .toList();
 
+        // 페이지네이션
+        int totalPages = (int) Math.ceil((double) allSummaries.size() / size);
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, allSummaries.size());
+        List<ReportListResponse.ReportSummary> pageItems =
+                fromIndex < allSummaries.size() ? allSummaries.subList(fromIndex, toIndex) : List.of();
+
         return ReportListResponse.builder()
-                .totalCount(reportPage.getTotalElements())
+                .totalCount(allSummaries.size())
                 .page(page)
                 .size(size)
-                .totalPages(reportPage.getTotalPages())
-                .reports(summaries)
+                .totalPages(totalPages)
+                .reports(pageItems)
                 .build();
     }
 
@@ -220,6 +231,7 @@ public class ReportService {
                     return AdminReportListResponse.AdminReportItem.builder()
                             .reportId(report != null ? report.getId() : null)
                             .enrollmentId(e.getId())
+                            .employeeNo(u.getEmployeeNo())
                             .name(u.getName())
                             .team(u.getTeam())
                             .title(report != null ? report.getTitle() : null)

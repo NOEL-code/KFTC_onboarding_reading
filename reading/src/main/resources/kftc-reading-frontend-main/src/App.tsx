@@ -2,9 +2,12 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 
 import theme from './theme.ts';
+import { AuthProvider } from './context/AuthContext.tsx';
 import { CourseProvider } from './context/CourseContext.tsx';
 
 import AdminLayout from './layouts/AdminLayout.tsx';
+import AdminLogin from './pages/admin/AdminLogin.tsx';
+import RequireAdmin from './router/RequireAdmin.tsx';
 import UserLayout from './layouts/UserLayout.tsx';
 
 // Admin pages
@@ -23,16 +26,22 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <AuthProvider>
       <CourseProvider>
       <BrowserRouter>
         <Routes>
-          {/* ── Admin routes (auth disabled) ──────────────────────── */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/reports" replace />} />
-            <Route path="reports"   element={<ReportManagement />} />
-            <Route path="users"     element={<UserManagement />} />
-            <Route path="courses"   element={<CourseManagement />} />
-            <Route path="templates" element={<TemplateManagement />} />
+          {/* ── Admin login ────────────────────────────────────────── */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+
+          {/* ── Admin routes (JWT required) ────────────────────────── */}
+          <Route path="/admin" element={<RequireAdmin />}>
+            <Route element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/reports" replace />} />
+              <Route path="reports"   element={<ReportManagement />} />
+              <Route path="users"     element={<UserManagement />} />
+              <Route path="courses"   element={<CourseManagement />} />
+              <Route path="templates" element={<TemplateManagement />} />
+            </Route>
           </Route>
 
           {/* ── User routes ───────────────────────────────────────── */}
@@ -48,6 +57,7 @@ export default function App() {
         </Routes>
       </BrowserRouter>
       </CourseProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
