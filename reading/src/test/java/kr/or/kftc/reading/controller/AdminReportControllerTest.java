@@ -3,6 +3,7 @@ package kr.or.kftc.reading.controller;
 import kr.or.kftc.reading.config.SecurityConfig;
 import kr.or.kftc.reading.dto.AdminReportListResponse;
 import kr.or.kftc.reading.entity.BookReport;
+import kr.or.kftc.reading.entity.ReportStatus;
 import kr.or.kftc.reading.security.JwtAuthenticationFilter;
 import kr.or.kftc.reading.security.JwtUtil;
 import kr.or.kftc.reading.service.ReportService;
@@ -50,7 +51,7 @@ class AdminReportControllerTest {
                 .reports(List.of(
                         AdminReportListResponse.AdminReportItem.builder()
                                 .reportId(1L).enrollmentId(1L).name("김민수")
-                                .department("IT개발부").title("독후감1")
+                                .team("IT개발팀").title("독후감1")
                                 .status("제출").submittedAt("2026-03-01")
                                 .build()))
                 .build();
@@ -71,7 +72,7 @@ class AdminReportControllerTest {
     void downloadReport() throws Exception {
         BookReport report = BookReport.builder()
                 .id(1L).fileName("report.hwp").fileData("file-content".getBytes())
-                .fileSize(12L).status("제출").build();
+                .fileSize(12L).status(ReportStatus.제출).build();
 
         when(reportService.getReportEntity(1L)).thenReturn(report);
 
@@ -99,13 +100,13 @@ class AdminReportControllerTest {
     @Test
     @DisplayName("PATCH /api/admin/reports/supplement - 일괄 보완")
     void supplementReports() throws Exception {
-        when(reportService.supplementReports(List.of(1L)))
+        when(reportService.supplementReports(eq(List.of(1L)), any()))
                 .thenReturn(Map.of("updatedCount", 1, "message", "1건이 보완 요청되었습니다."));
 
         mockMvc.perform(patch("/api/admin/reports/supplement")
                         .with(authentication(adminAuth()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"reportIds\":[1]}"))
+                        .content("{\"reportIds\":[1],\"reason\":\"내용 보완 필요\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.updatedCount").value(1));
     }

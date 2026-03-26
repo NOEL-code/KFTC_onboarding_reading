@@ -18,9 +18,7 @@ public class CourseUserListResponse {
         private Long enrollmentId;
         private String employeeNo;
         private String name;
-        private String department;
-        private String email;
-        private String phone;
+        private String team;
         private String enrolledAt;
     }
 }

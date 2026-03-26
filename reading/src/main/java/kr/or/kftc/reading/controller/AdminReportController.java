@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.or.kftc.reading.dto.AdminReportListResponse;
 import kr.or.kftc.reading.dto.ReportIdsRequest;
+import kr.or.kftc.reading.dto.SupplementRequest;
 import kr.or.kftc.reading.entity.BookReport;
 import kr.or.kftc.reading.exception.BusinessException;
 import kr.or.kftc.reading.service.ReportService;
@@ -31,11 +32,11 @@ public class AdminReportController {
     public ResponseEntity<AdminReportListResponse> getAdminReports(
             @RequestParam Long courseId,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String team,
             @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(reportService.getAdminReports(courseId, status, department, name, page, size));
+        return ResponseEntity.ok(reportService.getAdminReports(courseId, status, team, name, page, size));
     }
 
     @Operation(summary = "독후감 HWP 다운로드", description = "독후감 파일을 다운로드합니다.")
@@ -63,9 +64,9 @@ public class AdminReportController {
         return ResponseEntity.ok(reportService.approveReports(request.getReportIds()));
     }
 
-    @Operation(summary = "독후감 일괄 보완 요청", description = "선택한 독후감들을 일괄 보완 요청 처리합니다.")
+    @Operation(summary = "독후감 일괄 보완 요청", description = "선택한 독후감들을 일괄 보완 요청 처리합니다. 보완 사유를 함께 입력할 수 있습니다.")
     @PatchMapping("/supplement")
-    public ResponseEntity<Map<String, Object>> supplementReports(@RequestBody ReportIdsRequest request) {
-        return ResponseEntity.ok(reportService.supplementReports(request.getReportIds()));
+    public ResponseEntity<Map<String, Object>> supplementReports(@RequestBody SupplementRequest request) {
+        return ResponseEntity.ok(reportService.supplementReports(request.getReportIds(), request.getReason()));
     }
 }

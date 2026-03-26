@@ -1,6 +1,8 @@
 package kr.or.kftc.reading.repository;
 
 import kr.or.kftc.reading.entity.*;
+import static kr.or.kftc.reading.entity.CourseStatus.*;
+import static kr.or.kftc.reading.entity.ReportStatus.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,19 +39,19 @@ class BookReportRepositoryTest {
                 .name("26년 상반기")
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 6, 30))
-                .status("진행중")
+                .status(진행중)
                 .build());
 
         user1 = em.persist(User.builder()
                 .employeeNo("20210001")
                 .name("김민수")
-                .department("IT개발부")
+                .team("IT개발팀")
                 .build());
 
         user2 = em.persist(User.builder()
                 .employeeNo("20210002")
                 .name("이영희")
-                .department("인사부")
+                .team("인사팀")
                 .build());
 
         enrollment1 = em.persist(CourseEnrollment.builder()
@@ -62,7 +64,7 @@ class BookReportRepositoryTest {
                 .title("독후감1")
                 .fileName("report1.hwp")
                 .fileSize(1024L)
-                .status("제출")
+                .status(제출)
                 .submittedAt(LocalDateTime.now())
                 .build());
 
@@ -71,7 +73,7 @@ class BookReportRepositoryTest {
                 .title("독후감2")
                 .fileName("report2.hwp")
                 .fileSize(2048L)
-                .status("승인")
+                .status(승인)
                 .submittedAt(LocalDateTime.now())
                 .build());
 

@@ -30,9 +30,10 @@ public class AdminReportListResponse {
         private Long reportId;
         private Long enrollmentId;
         private String name;
-        private String department;
+        private String team;
         private String title;
         private String status;
+        private String supplementReason;
         private String submittedAt;
     }
 }

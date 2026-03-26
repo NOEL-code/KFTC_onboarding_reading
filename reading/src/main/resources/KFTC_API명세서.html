@@ -422,7 +422,7 @@
     {
       <span class="key">"reportId"</span>: <span class="num">1</span>,
       <span class="key">"name"</span>: <span class="str">"김민수"</span>,
-      <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
+      <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
       <span class="key">"title"</span>: <span class="str">"데이터 중심 애플리케이션 설계 독후감"</span>,
       <span class="key">"status"</span>: <span class="str">"승인"</span>,
       <span class="key">"submittedAt"</span>: <span class="str">"2026-03-20"</span>
@@ -452,7 +452,7 @@
   <span class="key">"courseName"</span>: <span class="str">"26년 상반기"</span>,
   <span class="key">"employeeNo"</span>: <span class="str">"20210001"</span>,
   <span class="key">"name"</span>: <span class="str">"김민수"</span>,
-  <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
+  <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
   <span class="key">"title"</span>: <span class="str">"데이터 중심 애플리케이션 설계 독후감"</span>,
   <span class="key">"fileName"</span>: <span class="str">"독후감_김민수.hwp"</span>,
   <span class="key">"fileSize"</span>: <span class="num">245760</span>,
@@ -505,7 +505,7 @@
       <span class="key">"reportId"</span>: <span class="num">1</span>,
       <span class="key">"courseName"</span>: <span class="str">"26년 상반기"</span>,
       <span class="key">"name"</span>: <span class="str">"김민수"</span>,
-      <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
+      <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
       <span class="key">"title"</span>: <span class="str">"데이터 중심 애플리케이션 설계 독후감"</span>,
       <span class="key">"status"</span>: <span class="str">"승인"</span>,
       <span class="key">"submittedAt"</span>: <span class="str">"2026-03-20"</span>
@@ -654,9 +654,7 @@
       <span class="key">"enrollmentId"</span>: <span class="num">1</span>,
       <span class="key">"employeeNo"</span>: <span class="str">"20260001"</span>,
       <span class="key">"name"</span>: <span class="str">"김민수"</span>,
-      <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
-      <span class="key">"email"</span>: <span class="str">"minsu.kim@kftc.or.kr"</span>,
-      <span class="key">"phone"</span>: <span class="str">"010-1111-0001"</span>,
+      <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
       <span class="key">"enrolledAt"</span>: <span class="str">"2026-01-15T09:00:00"</span>
     },
     {
@@ -664,9 +662,7 @@
       <span class="key">"enrollmentId"</span>: <span class="num">2</span>,
       <span class="key">"employeeNo"</span>: <span class="str">"20260002"</span>,
       <span class="key">"name"</span>: <span class="str">"이영희"</span>,
-      <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
-      <span class="key">"email"</span>: <span class="str">"yh.lee@kftc.or.kr"</span>,
-      <span class="key">"phone"</span>: <span class="str">"010-1111-0002"</span>,
+      <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
       <span class="key">"enrolledAt"</span>: <span class="str">"2026-01-15T09:00:00"</span>
     }
   ]
@@ -689,7 +685,7 @@
                 <tr><td>courseId</td><td><span class="type-tag">Long</span></td><td><span class="required">필수</span></td><td>등록 대상 독서과정 ID</td></tr>
                 <tr><td>file</td><td><span class="type-tag">File</span></td><td><span class="required">필수</span></td><td>엑셀 파일 (.xlsx, .xls / 최대 500명)</td></tr>
             </table>
-            <div class="api-note">엑셀 필수 컬럼: 사번, 이름, 부서, 이메일, 연락처</div>
+            <div class="api-note">엑셀 필수 컬럼: 사번, 이름, 팀</div>
             <h4>Response — 200 OK</h4>
             <div class="code-block">{
   <span class="key">"totalRows"</span>: <span class="num">24</span>,
@@ -718,17 +714,13 @@
       <span class="key">"courseId"</span>: <span class="num">3</span>,
       <span class="key">"employeeNo"</span>: <span class="str">"20210001"</span>,
       <span class="key">"name"</span>: <span class="str">"김민수"</span>,
-      <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
-      <span class="key">"email"</span>: <span class="str">"minsu.k@kftc.or.kr"</span>,
-      <span class="key">"phone"</span>: <span class="str">"010-1234-5678"</span>
+      <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
     },
     {
       <span class="key">"courseId"</span>: <span class="num">3</span>,
       <span class="key">"employeeNo"</span>: <span class="str">"20210002"</span>,
       <span class="key">"name"</span>: <span class="str">"이영희"</span>,
-      <span class="key">"department"</span>: <span class="str">"기획부"</span>,
-      <span class="key">"email"</span>: <span class="str">"yh.lee@kftc.or.kr"</span>,
-      <span class="key">"phone"</span>: <span class="str">"010-5678-1234"</span>
+      <span class="key">"team"</span>: <span class="str">"기획팀"</span>,
     }
   ]
 }</div>
@@ -762,12 +754,11 @@
     {
       <span class="key">"userId"</span>: <span class="num">1</span>,
       <span class="key">"name"</span>: <span class="str">"김민수(수정)"</span>,
-      <span class="key">"department"</span>: <span class="str">"경영지원부"</span>
+      <span class="key">"team"</span>: <span class="str">"경영지원팀"</span>
     },
     {
       <span class="key">"userId"</span>: <span class="num">2</span>,
-      <span class="key">"email"</span>: <span class="str">"yh.lee@kftc.or.kr"</span>,
-      <span class="key">"phone"</span>: <span class="str">"010-9999-8888"</span>
+      <span class="key">"team"</span>: <span class="str">"기획팀"</span>
     }
   ]
 }</div>
@@ -936,7 +927,7 @@
                 <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
                 <tr><td>courseId</td><td><span class="type-tag">Long</span></td><td><span class="required">필수</span></td><td>독서과정 ID</td></tr>
                 <tr><td>status</td><td><span class="type-tag">String</span></td><td><span class="optional">선택</span></td><td>상태 필터 — <code>전체</code> | <code>미제출</code> | <code>제출</code> | <code>승인</code> | <code>보완</code></td></tr>
-                <tr><td>department</td><td><span class="type-tag">String</span></td><td><span class="optional">선택</span></td><td>부서 필터</td></tr>
+                <tr><td>team</td><td><span class="type-tag">String</span></td><td><span class="optional">선택</span></td><td>팀 필터</td></tr>
                 <tr><td>name</td><td><span class="type-tag">String</span></td><td><span class="optional">선택</span></td><td>이름 검색</td></tr>
                 <tr><td>page</td><td><span class="type-tag">Integer</span></td><td><span class="optional">선택</span></td><td>페이지 번호 (기본값: 1)</td></tr>
                 <tr><td>size</td><td><span class="type-tag">Integer</span></td><td><span class="optional">선택</span></td><td>페이지당 건수 (기본값: 10)</td></tr>
@@ -958,7 +949,7 @@
       <span class="key">"reportId"</span>: <span class="num">1</span>,
       <span class="key">"enrollmentId"</span>: <span class="num">1</span>,
       <span class="key">"name"</span>: <span class="str">"김민수"</span>,
-      <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
+      <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
       <span class="key">"title"</span>: <span class="str">"데이터 중심 애플리케이션 설계 독후감"</span>,
       <span class="key">"status"</span>: <span class="str">"승인"</span>,
       <span class="key">"submittedAt"</span>: <span class="str">"2026-03-20"</span>

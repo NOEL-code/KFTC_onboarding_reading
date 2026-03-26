@@ -150,9 +150,7 @@ erDiagram
         bigint id PK
         varchar employee_no UK
         varchar name
-        varchar department
-        varchar email
-        varchar phone
+        varchar team
         timestamp created_at
         timestamp updated_at
     }
@@ -278,9 +276,7 @@ erDiagram
                         <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>사용자 ID</td></tr>
                         <tr><td>employee_no</td><td>VARCHAR(20)</td><td><span class="uk">UK</span></td><td>사번</td></tr>
                         <tr><td>name</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>이름</td></tr>
-                        <tr><td>department</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>부서 (IT개발부, 인사부 등)</td></tr>
-                        <tr><td>email</td><td>VARCHAR(100)</td><td></td><td>이메일</td></tr>
-                        <tr><td>phone</td><td>VARCHAR(20)</td><td></td><td>연락처</td></tr>
+                        <tr><td>team</td><td>VARCHAR(50)</td><td>NOT NULL</td><td>팀 (IT개발팀, 인사팀 등)</td></tr>
                         <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>생성일시</td></tr>
                         <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>수정일시</td></tr>
                     </table>

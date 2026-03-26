@@ -36,8 +36,8 @@ class UserServiceTest {
     @DisplayName("과정별 사용자 목록 조회")
     void getUsersByCourse() {
         ReadingCourse course = ReadingCourse.builder().id(1L).name("26년 상반기").build();
-        User user1 = User.builder().id(1L).employeeNo("20260001").name("김민수").department("IT개발부").build();
-        User user2 = User.builder().id(2L).employeeNo("20260002").name("이영희").department("기획부").build();
+        User user1 = User.builder().id(1L).employeeNo("20260001").name("김민수").team("IT개발팀").build();
+        User user2 = User.builder().id(2L).employeeNo("20260002").name("이영희").team("기획팀").build();
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
         when(enrollmentRepository.findByCourseId(1L)).thenReturn(List.of(
@@ -68,9 +68,9 @@ class UserServiceTest {
                 .thenReturn(CourseEnrollment.builder().id(1L).build());
 
         UserCreateRequest req1 = new UserCreateRequest();
-        req1.setCourseId(1L); req1.setEmployeeNo("20210001"); req1.setName("김민수"); req1.setDepartment("IT개발부");
+        req1.setCourseId(1L); req1.setEmployeeNo("20210001"); req1.setName("김민수"); req1.setTeam("IT개발팀");
         UserCreateRequest req2 = new UserCreateRequest();
-        req2.setCourseId(1L); req2.setEmployeeNo("20210002"); req2.setName("이영희"); req2.setDepartment("기획부");
+        req2.setCourseId(1L); req2.setEmployeeNo("20210002"); req2.setName("이영희"); req2.setTeam("기획팀");
 
         UserBatchResponse result = userService.createUsers(List.of(req1, req2));
 
@@ -96,9 +96,9 @@ class UserServiceTest {
                 .thenReturn(CourseEnrollment.builder().id(2L).build());
 
         UserCreateRequest req1 = new UserCreateRequest();
-        req1.setCourseId(1L); req1.setEmployeeNo("20210001"); req1.setName("김민수"); req1.setDepartment("IT개발부");
+        req1.setCourseId(1L); req1.setEmployeeNo("20210001"); req1.setName("김민수"); req1.setTeam("IT개발팀");
         UserCreateRequest req2 = new UserCreateRequest();
-        req2.setCourseId(1L); req2.setEmployeeNo("20210002"); req2.setName("이영희"); req2.setDepartment("기획부");
+        req2.setCourseId(1L); req2.setEmployeeNo("20210002"); req2.setName("이영희"); req2.setTeam("기획팀");
 
         UserBatchResponse result = userService.createUsers(List.of(req1, req2));
 
@@ -111,8 +111,8 @@ class UserServiceTest {
     @Test
     @DisplayName("일괄 수정 - 해당 과정에 등록된 2명 수정 성공")
     void updateUsers() {
-        User user1 = User.builder().id(1L).employeeNo("20210001").name("김민수").department("IT개발부").build();
-        User user2 = User.builder().id(2L).employeeNo("20210002").name("이영희").department("기획부").build();
+        User user1 = User.builder().id(1L).employeeNo("20210001").name("김민수").team("IT개발팀").build();
+        User user2 = User.builder().id(2L).employeeNo("20210002").name("이영희").team("기획팀").build();
 
         when(enrollmentRepository.existsByCourseIdAndUserId(1L, 1L)).thenReturn(true);
         when(enrollmentRepository.existsByCourseIdAndUserId(1L, 2L)).thenReturn(true);
@@ -122,13 +122,13 @@ class UserServiceTest {
         UserUpdateRequest req1 = new UserUpdateRequest();
         req1.setUserId(1L); req1.setName("김민수(수정)");
         UserUpdateRequest req2 = new UserUpdateRequest();
-        req2.setUserId(2L); req2.setDepartment("경영지원부");
+        req2.setUserId(2L); req2.setTeam("경영지원팀");
 
         UserBatchResponse result = userService.updateUsers(1L, List.of(req1, req2));
 
         assertThat(result.getSuccessCount()).isEqualTo(2);
         assertThat(user1.getName()).isEqualTo("김민수(수정)");
-        assertThat(user2.getDepartment()).isEqualTo("경영지원부");
+        assertThat(user2.getTeam()).isEqualTo("경영지원팀");
     }
 
     @Test

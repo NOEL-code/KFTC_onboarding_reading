@@ -45,9 +45,7 @@ public class UserService {
                             .enrollmentId(e.getId())
                             .employeeNo(u.getEmployeeNo())
                             .name(u.getName())
-                            .department(u.getDepartment())
-                            .email(u.getEmail())
-                            .phone(u.getPhone())
+                            .team(u.getTeam())
                             .enrolledAt(e.getCreatedAt() != null ? e.getCreatedAt().toString() : null)
                             .build();
                 })
@@ -76,9 +74,7 @@ public class UserService {
                         .orElseGet(() -> userRepository.save(User.builder()
                                 .employeeNo(req.getEmployeeNo())
                                 .name(req.getName())
-                                .department(req.getDepartment())
-                                .email(req.getEmail())
-                                .phone(req.getPhone())
+                                .team(req.getTeam())
                                 .build()));
 
                 if (enrollmentRepository.existsByCourseIdAndUserId(course.getId(), user.getId())) {
@@ -124,9 +120,7 @@ public class UserService {
                         .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
                 if (req.getName() != null) user.setName(req.getName());
-                if (req.getDepartment() != null) user.setDepartment(req.getDepartment());
-                if (req.getEmail() != null) user.setEmail(req.getEmail());
-                if (req.getPhone() != null) user.setPhone(req.getPhone());
+                if (req.getTeam() != null) user.setTeam(req.getTeam());
 
                 results.add(BatchResultItem.builder()
                         .index(i).success(true).userId(user.getId())

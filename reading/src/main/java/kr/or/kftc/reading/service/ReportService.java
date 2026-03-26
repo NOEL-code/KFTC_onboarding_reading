@@ -3,6 +3,7 @@ package kr.or.kftc.reading.service;
 import kr.or.kftc.reading.dto.*;
 import kr.or.kftc.reading.entity.*;
 import kr.or.kftc.reading.exception.BusinessException;
+import static kr.or.kftc.reading.entity.ReportStatus.*;
 import kr.or.kftc.reading.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -52,14 +53,14 @@ public class ReportService {
                     .fileName(file.getOriginalFilename())
                     .fileData(file.getBytes())
                     .fileSize(file.getSize())
-                    .status("제출")
+                    .status(제출)
                     .submittedAt(LocalDateTime.now())
                     .build();
             reportRepository.save(report);
 
             return ReportResponse.builder()
                     .reportId(report.getId())
-                    .status(report.getStatus())
+                    .status(report.getStatus().name())
                     .submittedAt(report.getSubmittedAt())
                     .build();
         } catch (IOException e) {
@@ -80,9 +81,9 @@ public class ReportService {
                     return ReportListResponse.ReportSummary.builder()
                             .reportId(r.getId())
                             .name(u.getName())
-                            .department(u.getDepartment())
+                            .team(u.getTeam())
                             .title(r.getTitle())
-                            .status(r.getStatus())
+                            .status(r.getStatus().name())
                             .submittedAt(r.getSubmittedAt() != null ? r.getSubmittedAt().format(DATE_FMT) : null)
                             .build();
                 })
@@ -109,11 +110,12 @@ public class ReportService {
                 .courseName(course.getName())
                 .employeeNo(user.getEmployeeNo())
                 .name(user.getName())
-                .department(user.getDepartment())
+                .team(user.getTeam())
                 .title(report.getTitle())
                 .fileName(report.getFileName())
                 .fileSize(report.getFileSize())
-                .status(report.getStatus())
+                .status(report.getStatus().name())
+                .supplementReason(report.getSupplementReason())
                 .submittedAt(report.getSubmittedAt())
                 .build();
     }
@@ -140,9 +142,9 @@ public class ReportService {
                             .reportId(r.getId())
                             .courseName(c.getName())
                             .name(u.getName())
-                            .department(u.getDepartment())
+                            .team(u.getTeam())
                             .title(r.getTitle())
-                            .status(r.getStatus())
+                            .status(r.getStatus().name())
                             .submittedAt(r.getSubmittedAt() != null ? r.getSubmittedAt().format(DATE_FMT) : null)
                             .build();
                 })
@@ -175,14 +177,15 @@ public class ReportService {
         }
 
         // 보완 상태에서 재제출 시 "제출"로 변경
-        if ("보완".equals(report.getStatus())) {
-            report.setStatus("제출");
+        if (report.getStatus() == 보완) {
+            report.setStatus(제출);
             report.setSubmittedAt(LocalDateTime.now());
+            report.setSupplementReason(null);
         }
 
         return ReportResponse.builder()
                 .reportId(report.getId())
-                .status(report.getStatus())
+                .status(report.getStatus().name())
                 .updatedAt(report.getUpdatedAt())
                 .build();
     }
@@ -202,7 +205,7 @@ public class ReportService {
 
     // === 관리자 기능 ===
 
-    public AdminReportListResponse getAdminReports(Long courseId, String status, String department,
+    public AdminReportListResponse getAdminReports(Long courseId, String status, String team,
                                                     String name, int page, int size) {
         // 전체 enrollment 조회 (해당 과정)
         List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
@@ -212,14 +215,15 @@ public class ReportService {
                 .map(e -> {
                     BookReport report = reportRepository.findByEnrollmentId(e.getId()).orElse(null);
                     User u = e.getUser();
-                    String reportStatus = report != null ? report.getStatus() : "미제출";
+                    String reportStatus = report != null ? report.getStatus().name() : 미제출.name();
                     return AdminReportListResponse.AdminReportItem.builder()
                             .reportId(report != null ? report.getId() : null)
                             .enrollmentId(e.getId())
                             .name(u.getName())
-                            .department(u.getDepartment())
+                            .team(u.getTeam())
                             .title(report != null ? report.getTitle() : null)
                             .status(reportStatus)
+                            .supplementReason(report != null ? report.getSupplementReason() : null)
                             .submittedAt(report != null && report.getSubmittedAt() != null
                                     ? report.getSubmittedAt().format(DATE_FMT) : null)
                             .build();
@@ -229,16 +233,16 @@ public class ReportService {
         // 필터링
         List<AdminReportListResponse.AdminReportItem> filtered = allItems.stream()
                 .filter(item -> status == null || "전체".equals(status) || item.getStatus().equals(status))
-                .filter(item -> department == null || department.isBlank() || item.getDepartment().equals(department))
+                .filter(item -> team == null || team.isBlank() || item.getTeam().equals(team))
                 .filter(item -> name == null || name.isBlank() || item.getName().contains(name))
                 .toList();
 
         // Summary 계산
         long total = allItems.size();
-        long submitted = allItems.stream().filter(i -> "제출".equals(i.getStatus())).count();
-        long approved = allItems.stream().filter(i -> "승인".equals(i.getStatus())).count();
-        long supplement = allItems.stream().filter(i -> "보완".equals(i.getStatus())).count();
-        long notSubmitted = allItems.stream().filter(i -> "미제출".equals(i.getStatus())).count();
+        long submitted = allItems.stream().filter(i -> 제출.name().equals(i.getStatus())).count();
+        long approved = allItems.stream().filter(i -> 승인.name().equals(i.getStatus())).count();
+        long supplement = allItems.stream().filter(i -> 보완.name().equals(i.getStatus())).count();
+        long notSubmitted = allItems.stream().filter(i -> 미제출.name().equals(i.getStatus())).count();
 
         // 페이지네이션
         int totalPages = (int) Math.ceil((double) filtered.size() / size);
@@ -272,8 +276,8 @@ public class ReportService {
         int count = 0;
         for (Long id : reportIds) {
             BookReport report = reportRepository.findById(id).orElse(null);
-            if (report != null && !"미제출".equals(report.getStatus())) {
-                report.setStatus("승인");
+            if (report != null && report.getStatus() != 미제출) {
+                report.setStatus(승인);
                 count++;
             }
         }
@@ -281,12 +285,13 @@ public class ReportService {
     }
 
     @Transactional
-    public Map<String, Object> supplementReports(List<Long> reportIds) {
+    public Map<String, Object> supplementReports(List<Long> reportIds, String reason) {
         int count = 0;
         for (Long id : reportIds) {
             BookReport report = reportRepository.findById(id).orElse(null);
-            if (report != null && !"미제출".equals(report.getStatus())) {
-                report.setStatus("보완");
+            if (report != null && report.getStatus() != 미제출) {
+                report.setStatus(보완);
+                report.setSupplementReason(reason);
                 count++;
             }
         }

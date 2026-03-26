@@ -52,12 +52,10 @@ class AdminUserControllerTest {
                 .courseId(1L).courseName("26년 상반기 독서과정").totalCount(2)
                 .users(List.of(
                         CourseUserItem.builder().userId(1L).enrollmentId(1L)
-                                .employeeNo("20260001").name("김민수").department("IT개발부")
-                                .email("minsu.kim@kftc.or.kr").phone("010-1111-0001")
+                                .employeeNo("20260001").name("김민수").team("IT개발팀")
                                 .enrolledAt("2026-01-15T09:00:00").build(),
                         CourseUserItem.builder().userId(2L).enrollmentId(2L)
-                                .employeeNo("20260002").name("이영희").department("IT개발부")
-                                .email("yh.lee@kftc.or.kr").phone("010-1111-0002")
+                                .employeeNo("20260002").name("이영희").team("IT개발팀")
                                 .enrolledAt("2026-01-15T09:00:00").build()))
                 .build();
 
@@ -111,7 +109,7 @@ class AdminUserControllerTest {
         mockMvc.perform(post("/api/admin/users")
                         .with(authentication(adminAuth()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"users\":[{\"courseId\":1,\"employeeNo\":\"20210001\",\"name\":\"김민수\",\"department\":\"IT개발부\"},{\"courseId\":1,\"employeeNo\":\"20210002\",\"name\":\"이영희\",\"department\":\"기획부\"}]}"))
+                        .content("{\"users\":[{\"courseId\":1,\"employeeNo\":\"20210001\",\"name\":\"김민수\",\"team\":\"IT개발팀\"},{\"courseId\":1,\"employeeNo\":\"20210002\",\"name\":\"이영희\",\"team\":\"기획팀\"}]}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.totalCount").value(2))
                 .andExpect(jsonPath("$.successCount").value(2))
@@ -133,7 +131,7 @@ class AdminUserControllerTest {
         mockMvc.perform(put("/api/admin/users")
                         .with(authentication(adminAuth()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"courseId\":1,\"users\":[{\"userId\":1,\"name\":\"김민수(수정)\"},{\"userId\":2,\"department\":\"경영지원부\"}]}"))
+                        .content("{\"courseId\":1,\"users\":[{\"userId\":1,\"name\":\"김민수(수정)\"},{\"userId\":2,\"team\":\"경영지원팀\"}]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.successCount").value(2));
     }

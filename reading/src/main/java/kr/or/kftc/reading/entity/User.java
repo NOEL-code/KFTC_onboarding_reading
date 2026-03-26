@@ -26,13 +26,7 @@ public class User {
     private String name;
 
     @Column(length = 50, nullable = false)
-    private String department;
-
-    @Column(length = 100)
-    private String email;
-
-    @Column(length = 20)
-    private String phone;
+    private String team;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

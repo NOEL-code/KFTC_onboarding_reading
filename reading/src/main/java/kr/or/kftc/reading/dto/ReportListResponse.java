@@ -19,7 +19,7 @@ public class ReportListResponse {
     public static class ReportSummary {
         private Long reportId;
         private String name;
-        private String department;
+        private String team;
         private String title;
         private String status;
         private String submittedAt;

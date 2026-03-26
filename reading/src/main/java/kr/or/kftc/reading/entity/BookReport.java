@@ -35,8 +35,12 @@ public class BookReport {
     @Column(name = "file_size")
     private Long fileSize;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private String status;
+    private ReportStatus status;
+
+    @Column(name = "supplement_reason", length = 500)
+    private String supplementReason;
 
     @Column(name = "submitted_at")
     private LocalDateTime submittedAt;

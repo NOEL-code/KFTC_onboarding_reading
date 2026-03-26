@@ -3,6 +3,7 @@ package kr.or.kftc.reading.service;
 import kr.or.kftc.reading.dto.CourseCreateRequest;
 import kr.or.kftc.reading.dto.CourseListResponse;
 import kr.or.kftc.reading.dto.CourseUpdateRequest;
+import kr.or.kftc.reading.entity.CourseStatus;
 import kr.or.kftc.reading.entity.ReadingCourse;
 import kr.or.kftc.reading.exception.BusinessException;
 import kr.or.kftc.reading.repository.BookReportRepository;
@@ -36,8 +37,8 @@ class CourseServiceTest {
     @Test
     @DisplayName("독서과정 목록 조회")
     void getAllCourses() {
-        ReadingCourse c1 = ReadingCourse.builder().id(1L).name("26년 상반기").status("진행중").build();
-        ReadingCourse c2 = ReadingCourse.builder().id(2L).name("25년 하반기").status("완료").build();
+        ReadingCourse c1 = ReadingCourse.builder().id(1L).name("26년 상반기").status(CourseStatus.진행중).build();
+        ReadingCourse c2 = ReadingCourse.builder().id(2L).name("25년 하반기").status(CourseStatus.완료).build();
         when(courseRepository.findAllByOrderByStartDateDesc()).thenReturn(List.of(c1, c2));
 
         CourseListResponse response = courseService.getAllCourses();
@@ -74,7 +75,7 @@ class CourseServiceTest {
                 .id(1L).name("26년 상반기")
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 6, 30))
-                .status("진행중").build();
+                .status(CourseStatus.진행중).build();
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
 
         CourseUpdateRequest request = new CourseUpdateRequest();
@@ -85,7 +86,7 @@ class CourseServiceTest {
 
         assertThat(result.get("message")).isEqualTo("독서과정이 수정되었습니다.");
         assertThat(course.getName()).isEqualTo("수정된 과정명");
-        assertThat(course.getStatus()).isEqualTo("완료");
+        assertThat(course.getStatus()).isEqualTo(CourseStatus.완료);
     }
 
     @Test

@@ -16,7 +16,7 @@ public class ReportSearchResponse {
         private Long reportId;
         private String courseName;
         private String name;
-        private String department;
+        private String team;
         private String title;
         private String status;
         private String submittedAt;

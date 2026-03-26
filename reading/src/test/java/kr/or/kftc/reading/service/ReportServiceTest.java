@@ -4,6 +4,8 @@ import kr.or.kftc.reading.dto.*;
 import kr.or.kftc.reading.entity.*;
 import kr.or.kftc.reading.exception.BusinessException;
 import kr.or.kftc.reading.repository.*;
+import static kr.or.kftc.reading.entity.CourseStatus.*;
+import static kr.or.kftc.reading.entity.ReportStatus.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,13 +37,13 @@ class ReportServiceTest {
     @InjectMocks private ReportService reportService;
 
     private User createUser() {
-        return User.builder().id(1L).employeeNo("20210001").name("김민수").department("IT개발부").build();
+        return User.builder().id(1L).employeeNo("20210001").name("김민수").team("IT개발팀").build();
     }
 
     private ReadingCourse createCourse() {
         return ReadingCourse.builder().id(1L).name("26년 상반기")
                 .startDate(LocalDate.of(2026, 1, 1)).endDate(LocalDate.of(2026, 6, 30))
-                .status("진행중").build();
+                .status(진행중).build();
     }
 
     private CourseEnrollment createEnrollment(ReadingCourse course, User user) {
@@ -51,7 +53,7 @@ class ReportServiceTest {
     private BookReport createReport(CourseEnrollment enrollment) {
         return BookReport.builder().id(1L).enrollment(enrollment)
                 .title("독후감1").fileName("report.hwp").fileSize(1024L)
-                .status("제출").submittedAt(LocalDateTime.now()).build();
+                .status(제출).submittedAt(LocalDateTime.now()).build();
     }
 
     // === 독후감 제출 ===
@@ -235,14 +237,14 @@ class ReportServiceTest {
         User user = createUser();
         CourseEnrollment enrollment = createEnrollment(course, user);
         BookReport report = createReport(enrollment);
-        report.setStatus("보완");
+        report.setStatus(보완);
 
         MockMultipartFile file = new MockMultipartFile("file", "new.hwp", "application/hwp", "data".getBytes());
         when(reportRepository.findById(1L)).thenReturn(Optional.of(report));
 
         ReportResponse response = reportService.updateReport(1L, "20210001", null, file);
 
-        assertThat(report.getStatus()).isEqualTo("제출");
+        assertThat(report.getStatus()).isEqualTo(제출);
     }
 
     // === 독후감 삭제 ===
@@ -283,8 +285,8 @@ class ReportServiceTest {
     @Test
     @DisplayName("일괄 승인 성공")
     void approveReports() {
-        BookReport r1 = BookReport.builder().id(1L).status("제출").build();
-        BookReport r2 = BookReport.builder().id(2L).status("제출").build();
+        BookReport r1 = BookReport.builder().id(1L).status(제출).build();
+        BookReport r2 = BookReport.builder().id(2L).status(제출).build();
 
         when(reportRepository.findById(1L)).thenReturn(Optional.of(r1));
         when(reportRepository.findById(2L)).thenReturn(Optional.of(r2));
@@ -292,8 +294,8 @@ class ReportServiceTest {
         Map<String, Object> result = reportService.approveReports(List.of(1L, 2L));
 
         assertThat(result.get("updatedCount")).isEqualTo(2);
-        assertThat(r1.getStatus()).isEqualTo("승인");
-        assertThat(r2.getStatus()).isEqualTo("승인");
+        assertThat(r1.getStatus()).isEqualTo(승인);
+        assertThat(r2.getStatus()).isEqualTo(승인);
     }
 
     // === 관리자: 일괄 보완 ===
@@ -301,13 +303,14 @@ class ReportServiceTest {
     @Test
     @DisplayName("일괄 보완 요청 성공")
     void supplementReports() {
-        BookReport r1 = BookReport.builder().id(1L).status("제출").build();
+        BookReport r1 = BookReport.builder().id(1L).status(제출).build();
         when(reportRepository.findById(1L)).thenReturn(Optional.of(r1));
 
-        Map<String, Object> result = reportService.supplementReports(List.of(1L));
+        Map<String, Object> result = reportService.supplementReports(List.of(1L), "내용 보완 필요");
 
         assertThat(result.get("updatedCount")).isEqualTo(1);
-        assertThat(r1.getStatus()).isEqualTo("보완");
+        assertThat(r1.getStatus()).isEqualTo(보완);
+        assertThat(r1.getSupplementReason()).isEqualTo("내용 보완 필요");
     }
 
     // === 관리자: 독후감 목록 ===
@@ -337,7 +340,7 @@ class ReportServiceTest {
         User user = createUser();
         CourseEnrollment enrollment = createEnrollment(course, user);
         BookReport report = createReport(enrollment);
-        report.setStatus("승인");
+        report.setStatus(승인);
 
         when(enrollmentRepository.findByCourseId(1L)).thenReturn(List.of(enrollment));
         when(reportRepository.findByEnrollmentId(1L)).thenReturn(Optional.of(report));

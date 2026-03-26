@@ -2,6 +2,8 @@ package kr.or.kftc.reading.config;
 
 import kr.or.kftc.reading.entity.*;
 import kr.or.kftc.reading.repository.*;
+import static kr.or.kftc.reading.entity.CourseStatus.*;
+import static kr.or.kftc.reading.entity.ReportStatus.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -48,40 +50,40 @@ public class DataInitializer implements CommandLineRunner {
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 6, 30))
                 .description("2026년 상반기 신입직원 독서과정입니다. 자기개발 도서 1권을 읽고 독후감을 제출해 주세요.")
-                .status("진행중").build());
+                .status(진행중).build());
 
         ReadingCourse course2 = courseRepository.save(ReadingCourse.builder()
                 .name("26년 하반기 독서과정")
                 .startDate(LocalDate.of(2026, 7, 1))
                 .endDate(LocalDate.of(2026, 12, 31))
                 .description("2026년 하반기 독서과정입니다.")
-                .status("진행중").build());
+                .status(진행중).build());
 
         ReadingCourse course3 = courseRepository.save(ReadingCourse.builder()
                 .name("25년 하반기 독서과정")
                 .startDate(LocalDate.of(2025, 7, 1))
                 .endDate(LocalDate.of(2025, 12, 31))
                 .description("2025년 하반기 독서과정 (종료)")
-                .status("종료").build());
+                .status(종료).build());
 
         log.info("독서과정 3개 생성 완료");
 
         // ── 3. 사용자 15명 (다양한 부서) ──
-        User u1  = saveUser("20260001", "김민수", "IT개발부", "minsu.kim@kftc.or.kr", "010-1111-0001");
-        User u2  = saveUser("20260002", "이영희", "IT개발부", "yh.lee@kftc.or.kr", "010-1111-0002");
-        User u3  = saveUser("20260003", "박준혁", "IT개발부", "jh.park@kftc.or.kr", "010-1111-0003");
-        User u4  = saveUser("20260004", "최수진", "경영지원부", "sj.choi@kftc.or.kr", "010-2222-0004");
-        User u5  = saveUser("20260005", "정다은", "경영지원부", "de.jung@kftc.or.kr", "010-2222-0005");
-        User u6  = saveUser("20260006", "한지민", "기획부", "jm.han@kftc.or.kr", "010-3333-0006");
-        User u7  = saveUser("20260007", "오세훈", "기획부", "sh.oh@kftc.or.kr", "010-3333-0007");
-        User u8  = saveUser("20260008", "윤서연", "금융결제부", "sy.yoon@kftc.or.kr", "010-4444-0008");
-        User u9  = saveUser("20260009", "장원영", "금융결제부", "wy.jang@kftc.or.kr", "010-4444-0009");
-        User u10 = saveUser("20260010", "임재현", "금융결제부", "jh.lim@kftc.or.kr", "010-4444-0010");
-        User u11 = saveUser("20260011", "송민호", "리스크관리부", "mh.song@kftc.or.kr", "010-5555-0011");
-        User u12 = saveUser("20260012", "강하늘", "리스크관리부", "hn.kang@kftc.or.kr", "010-5555-0012");
-        User u13 = saveUser("20260013", "조은서", "디지털혁신부", "es.jo@kftc.or.kr", "010-6666-0013");
-        User u14 = saveUser("20260014", "신동욱", "디지털혁신부", "dw.shin@kftc.or.kr", "010-6666-0014");
-        User u15 = saveUser("20260015", "배수지", "인사부", "sj.bae@kftc.or.kr", "010-7777-0015");
+        User u1  = saveUser("20260001", "김민수", "IT개발팀");
+        User u2  = saveUser("20260002", "이영희", "IT개발팀");
+        User u3  = saveUser("20260003", "박준혁", "IT개발팀");
+        User u4  = saveUser("20260004", "최수진", "경영지원팀");
+        User u5  = saveUser("20260005", "정다은", "경영지원팀");
+        User u6  = saveUser("20260006", "한지민", "기획팀");
+        User u7  = saveUser("20260007", "오세훈", "기획팀");
+        User u8  = saveUser("20260008", "윤서연", "금융결제팀");
+        User u9  = saveUser("20260009", "장원영", "금융결제팀");
+        User u10 = saveUser("20260010", "임재현", "금융결제팀");
+        User u11 = saveUser("20260011", "송민호", "리스크관리팀");
+        User u12 = saveUser("20260012", "강하늘", "리스크관리팀");
+        User u13 = saveUser("20260013", "조은서", "디지털혁신팀");
+        User u14 = saveUser("20260014", "신동욱", "디지털혁신팀");
+        User u15 = saveUser("20260015", "배수지", "인사팀");
 
         log.info("사용자 15명 생성 완료");
 
@@ -119,40 +121,40 @@ public class DataInitializer implements CommandLineRunner {
 
         // 과정1 독후감 - 다양한 상태
         // 제출 상태 (4건)
-        saveReport(e1, "리더십의 조건 - 독후감", "김민수_리더십의조건.hwp", dummyHwp, "제출",
+        saveReport(e1, "리더십의 조건 - 독후감", "김민수_리더십의조건.hwp", dummyHwp, 제출,
                 LocalDateTime.of(2026, 2, 15, 9, 30));
-        saveReport(e2, "경제학 콘서트를 읽고", "이영희_경제학콘서트.hwp", dummyHwp, "제출",
+        saveReport(e2, "경제학 콘서트를 읽고", "이영희_경제학콘서트.hwp", dummyHwp, 제출,
                 LocalDateTime.of(2026, 2, 20, 14, 0));
-        saveReport(e3, "프로그래머의 길, 멘토에게 묻다", "박준혁_프로그래머의길.hwp", dummyHwp, "제출",
+        saveReport(e3, "프로그래머의 길, 멘토에게 묻다", "박준혁_프로그래머의길.hwp", dummyHwp, 제출,
                 LocalDateTime.of(2026, 3, 1, 10, 15));
-        saveReport(e8, "디지털 금융의 미래", "윤서연_디지털금융의미래.hwp", dummyHwp, "제출",
+        saveReport(e8, "디지털 금융의 미래", "윤서연_디지털금융의미래.hwp", dummyHwp, 제출,
                 LocalDateTime.of(2026, 3, 10, 16, 45));
 
         // 승인 상태 (3건)
-        saveReport(e4, "일의 격 - 독후감", "최수진_일의격.hwp", dummyHwp, "승인",
+        saveReport(e4, "일의 격 - 독후감", "최수진_일의격.hwp", dummyHwp, 승인,
                 LocalDateTime.of(2026, 1, 25, 11, 0));
-        saveReport(e5, "데일 카네기 인간관계론", "정다은_인간관계론.hwp", dummyHwp, "승인",
+        saveReport(e5, "데일 카네기 인간관계론", "정다은_인간관계론.hwp", dummyHwp, 승인,
                 LocalDateTime.of(2026, 2, 5, 9, 0));
-        saveReport(e6, "사피엔스를 읽고", "한지민_사피엔스.hwp", dummyHwp, "승인",
+        saveReport(e6, "사피엔스를 읽고", "한지민_사피엔스.hwp", dummyHwp, 승인,
                 LocalDateTime.of(2026, 2, 10, 13, 30));
 
         // 보완 상태 (2건)
-        saveReport(e7, "독후감 제목 미정", "오세훈_독후감.hwp", dummyHwp, "보완",
+        saveReport(e7, "독후감 제목 미정", "오세훈_독후감.hwp", dummyHwp, 보완,
                 LocalDateTime.of(2026, 2, 28, 17, 0));
-        saveReport(e9, "금융과 기술의 융합에 대하여", "장원영_금융기술.hwp", dummyHwp, "보완",
+        saveReport(e9, "금융과 기술의 융합에 대하여", "장원영_금융기술.hwp", dummyHwp, 보완,
                 LocalDateTime.of(2026, 3, 5, 11, 30));
 
         // 미제출 상태 (3건 - 파일 없음)
-        saveReport(e10, null, null, null, "미제출", null);
-        saveReport(e11, null, null, null, "미제출", null);
-        saveReport(e12, null, null, null, "미제출", null);
+        saveReport(e10, null, null, null, 미제출, null);
+        saveReport(e11, null, null, null, 미제출, null);
+        saveReport(e12, null, null, null, 미제출, null);
 
         // 과정3 (종료된 과정) 독후감 - 모두 승인
-        saveReport(e18, "작년에 읽은 책 독후감", "김민수_작년독후감.hwp", dummyHwp, "승인",
+        saveReport(e18, "작년에 읽은 책 독후감", "김민수_작년독후감.hwp", dummyHwp, 승인,
                 LocalDateTime.of(2025, 10, 15, 9, 0));
-        saveReport(e19, "2025 하반기 독후감", "이영희_2025독후감.hwp", dummyHwp, "승인",
+        saveReport(e19, "2025 하반기 독후감", "이영희_2025독후감.hwp", dummyHwp, 승인,
                 LocalDateTime.of(2025, 11, 1, 14, 0));
-        saveReport(e20, "25년 독서 후기", "최수진_25년독서후기.hwp", dummyHwp, "승인",
+        saveReport(e20, "25년 독서 후기", "최수진_25년독서후기.hwp", dummyHwp, 승인,
                 LocalDateTime.of(2025, 11, 20, 10, 0));
 
         log.info("독후감 15건 생성 완료 (제출:4, 승인:6, 보완:2, 미제출:3)");
@@ -181,7 +183,7 @@ public class DataInitializer implements CommandLineRunner {
                         + "- 기간: 2026.01.01 ~ 2026.06.30\n"
                         + "- 대상: 신입직원 전원\n"
                         + "- 제출방법: 독후감 양식을 다운로드하여 작성 후 HWP 파일로 업로드\n"
-                        + "- 문의: 인사부 배수지 (내선 7777)")
+                        + "- 문의: 인사팀 배수지 (내선 7777)")
                 .createdBy(admin1).build());
 
         noticeRepository.save(Notice.builder()
@@ -203,17 +205,16 @@ public class DataInitializer implements CommandLineRunner {
         log.info("===== 테스트 데이터 초기화 완료 =====");
         log.info("  관리자: admin/admin, admin02/admin1234");
         log.info("  독서과정: 3개 (진행중 2개, 종료 1개)");
-        log.info("  사용자: 15명 (6개 부서)");
+        log.info("  사용자: 15명 (6개 팀)");
         log.info("  과정등록: 20건");
         log.info("  독후감: 15건 (제출4, 승인6, 보완2, 미제출3)");
         log.info("  양식: 2건 (사용중 1개)");
         log.info("  공지: 3건");
     }
 
-    private User saveUser(String employeeNo, String name, String department, String email, String phone) {
+    private User saveUser(String employeeNo, String name, String team) {
         return userRepository.save(User.builder()
-                .employeeNo(employeeNo).name(name).department(department)
-                .email(email).phone(phone).build());
+                .employeeNo(employeeNo).name(name).team(team).build());
     }
 
     private CourseEnrollment enroll(ReadingCourse course, User user) {
@@ -222,7 +223,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void saveReport(CourseEnrollment enrollment, String title, String fileName,
-                            byte[] fileData, String status, LocalDateTime submittedAt) {
+                            byte[] fileData, ReportStatus status, LocalDateTime submittedAt) {
         reportRepository.save(BookReport.builder()
                 .enrollment(enrollment).title(title).fileName(fileName)
                 .fileData(fileData).fileSize(fileData != null ? (long) fileData.length : null)

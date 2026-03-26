@@ -8,7 +8,5 @@ public class UserCreateRequest {
     private Long courseId;
     private String employeeNo;
     private String name;
-    private String department;
-    private String email;
-    private String phone;
+    private String team;
 }

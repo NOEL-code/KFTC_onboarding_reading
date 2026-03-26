@@ -62,9 +62,7 @@ public class ExcelService {
                 try {
                     String employeeNo = getCellString(row.getCell(0));
                     String name = getCellString(row.getCell(1));
-                    String department = getCellString(row.getCell(2));
-                    String email = getCellString(row.getCell(3));
-                    String phone = getCellString(row.getCell(4));
+                    String team = getCellString(row.getCell(2));
 
                     if (employeeNo == null || employeeNo.isBlank()) {
                         errors.add(ExcelUploadResponse.RowError.builder()
@@ -76,9 +74,9 @@ public class ExcelService {
                                 .row(i + 1).reason("이름 누락").build());
                         continue;
                     }
-                    if (department == null || department.isBlank()) {
+                    if (team == null || team.isBlank()) {
                         errors.add(ExcelUploadResponse.RowError.builder()
-                                .row(i + 1).reason("부서 누락").build());
+                                .row(i + 1).reason("팀 누락").build());
                         continue;
                     }
 
@@ -86,9 +84,7 @@ public class ExcelService {
                             .orElseGet(() -> userRepository.save(User.builder()
                                     .employeeNo(employeeNo)
                                     .name(name)
-                                    .department(department)
-                                    .email(email)
-                                    .phone(phone)
+                                    .team(team)
                                     .build()));
 
                     if (!enrollmentRepository.existsByCourseIdAndUserId(course.getId(), user.getId())) {

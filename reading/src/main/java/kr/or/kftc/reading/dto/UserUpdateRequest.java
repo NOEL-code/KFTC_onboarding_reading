@@ -7,7 +7,5 @@ import lombok.Setter;
 public class UserUpdateRequest {
     private Long userId;
     private String name;
-    private String department;
-    private String email;
-    private String phone;
+    private String team;
 }

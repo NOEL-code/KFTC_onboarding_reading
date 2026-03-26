@@ -32,8 +32,9 @@ public class ReadingCourse {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private String status;
+    private CourseStatus status;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -60,7 +60,7 @@ class ReportControllerTest {
                 .totalCount(1).page(1).size(10).totalPages(1)
                 .reports(List.of(
                         ReportListResponse.ReportSummary.builder()
-                                .reportId(1L).name("김민수").department("IT개발부")
+                                .reportId(1L).name("김민수").team("IT개발팀")
                                 .title("독후감1").status("제출").submittedAt("2026-03-01")
                                 .build()))
                 .build();
@@ -78,7 +78,7 @@ class ReportControllerTest {
     void getReportDetail() throws Exception {
         ReportDetailResponse response = ReportDetailResponse.builder()
                 .reportId(1L).courseName("26년 상반기").employeeNo("20210001")
-                .name("김민수").department("IT개발부").title("독후감1")
+                .name("김민수").team("IT개발팀").title("독후감1")
                 .fileName("report.hwp").fileSize(1024L)
                 .status("제출").submittedAt(LocalDateTime.now())
                 .build();
@@ -110,7 +110,7 @@ class ReportControllerTest {
                 .results(List.of(
                         ReportSearchResponse.SearchResult.builder()
                                 .reportId(1L).courseName("26년 상반기").name("김민수")
-                                .department("IT개발부").title("독후감1")
+                                .team("IT개발팀").title("독후감1")
                                 .status("제출").submittedAt("2026-03-01")
                                 .build()))
                 .build();

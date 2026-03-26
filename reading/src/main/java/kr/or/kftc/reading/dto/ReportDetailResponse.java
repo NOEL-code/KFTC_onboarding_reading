@@ -12,10 +12,11 @@ public class ReportDetailResponse {
     private String courseName;
     private String employeeNo;
     private String name;
-    private String department;
+    private String team;
     private String title;
     private String fileName;
     private Long fileSize;
     private String status;
+    private String supplementReason;
     private LocalDateTime submittedAt;
 }

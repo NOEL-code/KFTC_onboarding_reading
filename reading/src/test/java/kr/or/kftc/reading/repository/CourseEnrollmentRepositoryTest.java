@@ -1,6 +1,7 @@
 package kr.or.kftc.reading.repository;
 
 import kr.or.kftc.reading.entity.CourseEnrollment;
+import kr.or.kftc.reading.entity.CourseStatus;
 import kr.or.kftc.reading.entity.ReadingCourse;
 import kr.or.kftc.reading.entity.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,13 +34,13 @@ class CourseEnrollmentRepositoryTest {
                 .name("26년 상반기")
                 .startDate(LocalDate.of(2026, 1, 1))
                 .endDate(LocalDate.of(2026, 6, 30))
-                .status("진행중")
+                .status(CourseStatus.진행중)
                 .build());
 
         user = em.persist(User.builder()
                 .employeeNo("20210001")
                 .name("김민수")
-                .department("IT개발부")
+                .team("IT개발팀")
                 .build());
 
         em.persist(CourseEnrollment.builder()
