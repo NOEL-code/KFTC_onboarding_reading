@@ -18,8 +18,8 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         if (adminRepository.count() == 0) {
             Admin admin = Admin.builder()
-                    .loginId("admin01")
-                    .password(passwordEncoder.encode("admin1234"))
+                    .loginId("admin")
+                    .password(passwordEncoder.encode("admin"))
                     .name("관리자1")
                     .build();
             adminRepository.save(admin);
