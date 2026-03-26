@@ -16,6 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import kr.or.kftc.reading.dto.CourseUserListResponse;
+import kr.or.kftc.reading.dto.CourseUserListResponse.CourseUserItem;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +30,36 @@ public class UserService {
     private final UserRepository userRepository;
     private final ReadingCourseRepository courseRepository;
     private final CourseEnrollmentRepository enrollmentRepository;
+
+    public CourseUserListResponse getUsersByCourse(Long courseId) {
+        ReadingCourse course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
+
+        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+
+        List<CourseUserItem> users = enrollments.stream()
+                .map(e -> {
+                    User u = e.getUser();
+                    return CourseUserItem.builder()
+                            .userId(u.getId())
+                            .enrollmentId(e.getId())
+                            .employeeNo(u.getEmployeeNo())
+                            .name(u.getName())
+                            .department(u.getDepartment())
+                            .email(u.getEmail())
+                            .phone(u.getPhone())
+                            .enrolledAt(e.getCreatedAt() != null ? e.getCreatedAt().toString() : null)
+                            .build();
+                })
+                .toList();
+
+        return CourseUserListResponse.builder()
+                .courseId(course.getId())
+                .courseName(course.getName())
+                .totalCount(users.size())
+                .users(users)
+                .build();
+    }
 
     @Transactional
     public UserBatchResponse createUsers(List<UserCreateRequest> requests) {
@@ -73,13 +106,20 @@ public class UserService {
     }
 
     @Transactional
-    public UserBatchResponse updateUsers(List<UserUpdateRequest> requests) {
+    public UserBatchResponse updateUsers(Long courseId, List<UserUpdateRequest> requests) {
         List<BatchResultItem> results = new ArrayList<>();
         int success = 0;
 
         for (int i = 0; i < requests.size(); i++) {
             UserUpdateRequest req = requests.get(i);
             try {
+                if (!enrollmentRepository.existsByCourseIdAndUserId(courseId, req.getUserId())) {
+                    results.add(BatchResultItem.builder()
+                            .index(i).success(false).userId(req.getUserId())
+                            .message("해당 과정에 등록된 사용자를 찾을 수 없습니다.").build());
+                    continue;
+                }
+
                 User user = userRepository.findById(req.getUserId())
                         .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 

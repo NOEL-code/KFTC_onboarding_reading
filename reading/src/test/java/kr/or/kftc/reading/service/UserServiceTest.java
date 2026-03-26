@@ -1,5 +1,6 @@
 package kr.or.kftc.reading.service;
 
+import kr.or.kftc.reading.dto.CourseUserListResponse;
 import kr.or.kftc.reading.dto.UserBatchResponse;
 import kr.or.kftc.reading.dto.UserCreateRequest;
 import kr.or.kftc.reading.dto.UserUpdateRequest;
@@ -30,6 +31,26 @@ class UserServiceTest {
     @Mock private ReadingCourseRepository courseRepository;
     @Mock private CourseEnrollmentRepository enrollmentRepository;
     @InjectMocks private UserService userService;
+
+    @Test
+    @DisplayName("과정별 사용자 목록 조회")
+    void getUsersByCourse() {
+        ReadingCourse course = ReadingCourse.builder().id(1L).name("26년 상반기").build();
+        User user1 = User.builder().id(1L).employeeNo("20260001").name("김민수").department("IT개발부").build();
+        User user2 = User.builder().id(2L).employeeNo("20260002").name("이영희").department("기획부").build();
+
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
+        when(enrollmentRepository.findByCourseId(1L)).thenReturn(List.of(
+                CourseEnrollment.builder().id(1L).course(course).user(user1).build(),
+                CourseEnrollment.builder().id(2L).course(course).user(user2).build()));
+
+        CourseUserListResponse result = userService.getUsersByCourse(1L);
+
+        assertThat(result.getCourseId()).isEqualTo(1L);
+        assertThat(result.getTotalCount()).isEqualTo(2);
+        assertThat(result.getUsers().get(0).getName()).isEqualTo("김민수");
+        assertThat(result.getUsers().get(1).getEmployeeNo()).isEqualTo("20260002");
+    }
 
     @Test
     @DisplayName("일괄 추가 - 신규 사용자 2명 성공")
@@ -88,11 +109,13 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("일괄 수정 - 2명 수정 성공")
+    @DisplayName("일괄 수정 - 해당 과정에 등록된 2명 수정 성공")
     void updateUsers() {
         User user1 = User.builder().id(1L).employeeNo("20210001").name("김민수").department("IT개발부").build();
         User user2 = User.builder().id(2L).employeeNo("20210002").name("이영희").department("기획부").build();
 
+        when(enrollmentRepository.existsByCourseIdAndUserId(1L, 1L)).thenReturn(true);
+        when(enrollmentRepository.existsByCourseIdAndUserId(1L, 2L)).thenReturn(true);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
         when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
 
@@ -101,7 +124,7 @@ class UserServiceTest {
         UserUpdateRequest req2 = new UserUpdateRequest();
         req2.setUserId(2L); req2.setDepartment("경영지원부");
 
-        UserBatchResponse result = userService.updateUsers(List.of(req1, req2));
+        UserBatchResponse result = userService.updateUsers(1L, List.of(req1, req2));
 
         assertThat(result.getSuccessCount()).isEqualTo(2);
         assertThat(user1.getName()).isEqualTo("김민수(수정)");
@@ -109,21 +132,23 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("일괄 수정 - 존재하지 않는 사용자 포함 시 부분 성공")
+    @DisplayName("일괄 수정 - 과정에 미등록된 사용자 포함 시 부분 성공")
     void updateUsersPartialFail() {
         User user1 = User.builder().id(1L).name("김민수").build();
+        when(enrollmentRepository.existsByCourseIdAndUserId(1L, 1L)).thenReturn(true);
+        when(enrollmentRepository.existsByCourseIdAndUserId(1L, 999L)).thenReturn(false);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user1));
-        when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         UserUpdateRequest req1 = new UserUpdateRequest();
         req1.setUserId(1L); req1.setName("김민수(수정)");
         UserUpdateRequest req2 = new UserUpdateRequest();
-        req2.setUserId(999L); req2.setName("없는사용자");
+        req2.setUserId(999L); req2.setName("미등록사용자");
 
-        UserBatchResponse result = userService.updateUsers(List.of(req1, req2));
+        UserBatchResponse result = userService.updateUsers(1L, List.of(req1, req2));
 
         assertThat(result.getSuccessCount()).isEqualTo(1);
         assertThat(result.getFailCount()).isEqualTo(1);
+        assertThat(result.getResults().get(1).getMessage()).contains("해당 과정에 등록된 사용자를 찾을 수 없습니다.");
     }
 
     @Test

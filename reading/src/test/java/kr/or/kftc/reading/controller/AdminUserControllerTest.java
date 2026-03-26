@@ -1,6 +1,8 @@
 package kr.or.kftc.reading.controller;
 
 import kr.or.kftc.reading.config.SecurityConfig;
+import kr.or.kftc.reading.dto.CourseUserListResponse;
+import kr.or.kftc.reading.dto.CourseUserListResponse.CourseUserItem;
 import kr.or.kftc.reading.dto.ExcelUploadResponse;
 import kr.or.kftc.reading.dto.UserBatchResponse;
 import kr.or.kftc.reading.dto.UserBatchResponse.BatchResultItem;
@@ -41,6 +43,34 @@ class AdminUserControllerTest {
     private static UsernamePasswordAuthenticationToken adminAuth() {
         return new UsernamePasswordAuthenticationToken(
                 1L, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+    }
+
+    @Test
+    @DisplayName("GET /api/admin/users?courseId=1 - 과정별 사용자 목록 조회")
+    void getUsersByCourse() throws Exception {
+        CourseUserListResponse response = CourseUserListResponse.builder()
+                .courseId(1L).courseName("26년 상반기 독서과정").totalCount(2)
+                .users(List.of(
+                        CourseUserItem.builder().userId(1L).enrollmentId(1L)
+                                .employeeNo("20260001").name("김민수").department("IT개발부")
+                                .email("minsu.kim@kftc.or.kr").phone("010-1111-0001")
+                                .enrolledAt("2026-01-15T09:00:00").build(),
+                        CourseUserItem.builder().userId(2L).enrollmentId(2L)
+                                .employeeNo("20260002").name("이영희").department("IT개발부")
+                                .email("yh.lee@kftc.or.kr").phone("010-1111-0002")
+                                .enrolledAt("2026-01-15T09:00:00").build()))
+                .build();
+
+        when(userService.getUsersByCourse(1L)).thenReturn(response);
+
+        mockMvc.perform(get("/api/admin/users")
+                        .param("courseId", "1")
+                        .with(authentication(adminAuth())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.courseId").value(1))
+                .andExpect(jsonPath("$.totalCount").value(2))
+                .andExpect(jsonPath("$.users[0].name").value("김민수"))
+                .andExpect(jsonPath("$.users[1].employeeNo").value("20260002"));
     }
 
     @Test
@@ -98,12 +128,12 @@ class AdminUserControllerTest {
                         BatchResultItem.builder().index(1).success(true).userId(2L).message("수정 성공").build()))
                 .build();
 
-        when(userService.updateUsers(any())).thenReturn(response);
+        when(userService.updateUsers(eq(1L), any())).thenReturn(response);
 
         mockMvc.perform(put("/api/admin/users")
                         .with(authentication(adminAuth()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"users\":[{\"userId\":1,\"name\":\"김민수(수정)\"},{\"userId\":2,\"department\":\"경영지원부\"}]}"))
+                        .content("{\"courseId\":1,\"users\":[{\"userId\":1,\"name\":\"김민수(수정)\"},{\"userId\":2,\"department\":\"경영지원부\"}]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.successCount").value(2));
     }

@@ -20,6 +20,12 @@ public class AdminUserController {
     private final UserService userService;
     private final ExcelService excelService;
 
+    @Operation(summary = "과정별 사용자 목록 조회", description = "특정 독서과정에 등록된 사용자 목록을 조회합니다.")
+    @GetMapping
+    public ResponseEntity<CourseUserListResponse> getUsersByCourse(@RequestParam Long courseId) {
+        return ResponseEntity.ok(userService.getUsersByCourse(courseId));
+    }
+
     @Operation(summary = "엑셀 일괄 업로드", description = "엑셀 파일로 사용자를 일괄 등록합니다.")
     @PostMapping("/upload")
     public ResponseEntity<ExcelUploadResponse> uploadExcel(
@@ -34,10 +40,10 @@ public class AdminUserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUsers(request.getUsers()));
     }
 
-    @Operation(summary = "사용자 일괄 수정", description = "여러 사용자의 정보를 한 번에 수정합니다.")
+    @Operation(summary = "사용자 일괄 수정", description = "해당 과정에 등록된 사용자들의 정보를 한 번에 수정합니다.")
     @PutMapping
     public ResponseEntity<UserBatchResponse> updateUsers(@RequestBody UserBatchUpdateRequest request) {
-        return ResponseEntity.ok(userService.updateUsers(request.getUsers()));
+        return ResponseEntity.ok(userService.updateUsers(request.getCourseId(), request.getUsers()));
     }
 
     @Operation(summary = "사용자 일괄 삭제", description = "여러 사용자를 과정에서 한 번에 삭제합니다.")
