@@ -117,6 +117,7 @@ public class ReportService {
                 .status(report.getStatus().name())
                 .supplementReason(report.getSupplementReason())
                 .submittedAt(report.getSubmittedAt())
+                .downloadUrl("/api/reports/" + report.getId() + "/download")
                 .build();
     }
 

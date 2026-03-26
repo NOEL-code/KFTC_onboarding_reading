@@ -329,6 +329,7 @@
             <a href="#api-3"><span class="method-tag-sm method-get">GET</span>/api/reports/{reportId}</a>
             <a href="#api-7"><span class="method-tag-sm method-delete">DEL</span>/api/reports/{reportId}</a>
             <a href="#api-4"><span class="method-tag-sm method-get">GET</span>/api/courses</a>
+            <a href="#api-7-1"><span class="method-tag-sm method-get">GET</span>/api/reports/{reportId}/download</a>
             <a href="#api-8"><span class="method-tag-sm method-get">GET</span>/api/templates/download</a>
         </div>
         <p class="toc-section-title">관리자 API</p>
@@ -339,6 +340,7 @@
             <a href="#api-17"><span class="method-tag-sm method-put">PUT</span>/api/admin/courses/{courseId}</a>
             <a href="#api-10"><span class="method-tag-sm method-post">POST</span>/api/admin/users/upload</a>
             <a href="#api-11"><span class="method-tag-sm method-post">POST</span>/api/admin/users</a>
+            <a href="#api-17-1"><span class="method-tag-sm method-patch">PATCH</span>/api/admin/courses/{courseId}/status</a>
             <a href="#api-18"><span class="method-tag-sm method-delete">DEL</span>/api/admin/courses/{courseId}</a>
             <a href="#api-12"><span class="method-tag-sm method-put">PUT</span>/api/admin/users</a>
             <a href="#api-19"><span class="method-tag-sm method-get">GET</span>/api/admin/reports</a>
@@ -457,8 +459,11 @@
   <span class="key">"fileName"</span>: <span class="str">"독후감_김민수.hwp"</span>,
   <span class="key">"fileSize"</span>: <span class="num">245760</span>,
   <span class="key">"status"</span>: <span class="str">"승인"</span>,
-  <span class="key">"submittedAt"</span>: <span class="str">"2026-03-20T10:30:00"</span>
+  <span class="key">"supplementReason"</span>: <span class="null">null</span>,
+  <span class="key">"submittedAt"</span>: <span class="str">"2026-03-20T10:30:00"</span>,
+  <span class="key">"downloadUrl"</span>: <span class="str">"/api/reports/1/download"</span>
 }</div>
+            <div class="api-note">supplementReason은 보완 상태일 때만 값이 존재합니다. downloadUrl로 hwp 파일을 다운로드할 수 있습니다.</div>
         </div>
     </div>
 
@@ -571,6 +576,35 @@
                 <span class="status-item status-2xx"><code>200</code> 삭제 성공</span>
                 <span class="status-item status-4xx"><code>403</code> 본인 독후감 아님</span>
                 <span class="status-item status-4xx"><code>404</code> 독후감 없음</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- API 7-1: 사용자 독후감 다운로드 -->
+    <div class="api-card" id="api-7-1">
+        <div class="api-header">
+            <span class="method-tag method-get">GET</span>
+            <span class="api-path">/api/reports/{reportId}/download</span>
+            <span class="api-desc">독후감 HWP 파일 다운로드</span>
+            <span class="api-ref">기능 1.2.4</span>
+        </div>
+        <div class="api-body">
+            <h4>Path Parameters</h4>
+            <table class="param-table">
+                <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
+                <tr><td>reportId</td><td><span class="type-tag">Long</span></td><td><span class="required">필수</span></td><td>독후감 ID</td></tr>
+            </table>
+            <h4>Response — 200 OK</h4>
+            <table class="param-table">
+                <tr><th>헤더</th><th>값</th></tr>
+                <tr><td>Content-Type</td><td>application/octet-stream</td></tr>
+                <tr><td>Content-Disposition</td><td>attachment; filename="독후감_김민수.hwp"</td></tr>
+            </table>
+            <div class="api-note">JWT 인증 없이 사용 가능한 사용자용 다운로드 API입니다. 독후감 상세 조회의 downloadUrl로 접근합니다.</div>
+            <h4>Status Codes</h4>
+            <div class="status-list">
+                <span class="status-item status-2xx"><code>200</code> 다운로드 성공</span>
+                <span class="status-item status-4xx"><code>404</code> 독후감 없음 또는 미제출 상태</span>
             </div>
         </div>
     </div>
@@ -896,6 +930,39 @@
         </div>
     </div>
 
+    <!-- API 17-1: 독서과정 상태 변경 -->
+    <div class="api-card" id="api-17-1">
+        <div class="api-header">
+            <span class="method-tag method-patch">PATCH</span>
+            <span class="api-path">/api/admin/courses/{courseId}/status</span>
+            <span class="api-desc">독서과정 상태 변경</span>
+            <span class="api-ref">기능 2.4.2</span>
+        </div>
+        <div class="api-body">
+            <h4>Path Parameters</h4>
+            <table class="param-table">
+                <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
+                <tr><td>courseId</td><td><span class="type-tag">Long</span></td><td><span class="required">필수</span></td><td>독서과정 ID</td></tr>
+            </table>
+            <h4>Request Body</h4>
+            <div class="code-block">{
+  <span class="key">"status"</span>: <span class="str">"완료"</span>
+}</div>
+            <div class="api-note">허용 상태값: <code>진행중</code> | <code>완료</code> | <code>종료</code></div>
+            <h4>Response — 200 OK</h4>
+            <div class="code-block">{
+  <span class="key">"courseId"</span>: <span class="num">3</span>,
+  <span class="key">"message"</span>: <span class="str">"독서과정 상태가 변경되었습니다."</span>
+}</div>
+            <h4>Status Codes</h4>
+            <div class="status-list">
+                <span class="status-item status-2xx"><code>200</code> 상태 변경 성공</span>
+                <span class="status-item status-4xx"><code>400</code> 유효하지 않은 상태값</span>
+                <span class="status-item status-4xx"><code>404</code> 독서과정 없음</span>
+            </div>
+        </div>
+    </div>
+
     <!-- API 18: 독서과정 삭제 -->
     <div class="api-card" id="api-18">
         <div class="api-header">
@@ -952,6 +1019,7 @@
       <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
       <span class="key">"title"</span>: <span class="str">"데이터 중심 애플리케이션 설계 독후감"</span>,
       <span class="key">"status"</span>: <span class="str">"승인"</span>,
+      <span class="key">"supplementReason"</span>: <span class="null">null</span>,
       <span class="key">"submittedAt"</span>: <span class="str">"2026-03-20"</span>
     }
   ]
@@ -1020,8 +1088,10 @@
         <div class="api-body">
             <h4>Request Body</h4>
             <div class="code-block">{
-  <span class="key">"reportIds"</span>: [<span class="num">3</span>, <span class="num">7</span>]
+  <span class="key">"reportIds"</span>: [<span class="num">3</span>, <span class="num">7</span>],
+  <span class="key">"reason"</span>: <span class="str">"분량 부족, 핵심 내용 보완 필요"</span>
 }</div>
+            <div class="api-note">reason은 선택 항목입니다. 입력 시 해당 독후감의 supplementReason에 저장됩니다.</div>
             <h4>Response — 200 OK</h4>
             <div class="code-block">{
   <span class="key">"updatedCount"</span>: <span class="num">2</span>,

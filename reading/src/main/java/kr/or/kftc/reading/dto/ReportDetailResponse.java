@@ -19,4 +19,5 @@ public class ReportDetailResponse {
     private String status;
     private String supplementReason;
     private LocalDateTime submittedAt;
+    private String downloadUrl;
 }

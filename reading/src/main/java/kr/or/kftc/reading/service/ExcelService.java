@@ -81,6 +81,11 @@ public class ExcelService {
                     }
 
                     User user = userRepository.findByEmployeeNo(employeeNo)
+                            .map(existing -> {
+                                existing.setName(name);
+                                existing.setTeam(team);
+                                return existing;
+                            })
                             .orElseGet(() -> userRepository.save(User.builder()
                                     .employeeNo(employeeNo)
                                     .name(name)

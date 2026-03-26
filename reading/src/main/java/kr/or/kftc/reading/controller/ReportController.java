@@ -4,12 +4,19 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.or.kftc.reading.dto.*;
+import kr.or.kftc.reading.entity.BookReport;
+import kr.or.kftc.reading.exception.BusinessException;
 import kr.or.kftc.reading.service.ReportService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Tag(name = "사용자 - 독후감", description = "독후감 제출/조회/수정/삭제 API")
 @RestController
@@ -51,6 +58,25 @@ public class ReportController {
             @RequestParam(required = false) String employeeNo,
             @RequestParam(required = false) String name) {
         return ResponseEntity.ok(reportService.searchReports(employeeNo, name));
+    }
+
+    @Operation(summary = "독후감 HWP 다운로드", description = "독후감 파일을 다운로드합니다.")
+    @GetMapping("/reports/{reportId}/download")
+    public ResponseEntity<byte[]> downloadReport(@PathVariable Long reportId) {
+        BookReport report = reportService.getReportEntity(reportId);
+
+        if (report.getFileData() == null) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "미제출 상태의 독후감은 다운로드할 수 없습니다.");
+        }
+
+        String encodedFileName = URLEncoder.encode(report.getFileName(), StandardCharsets.UTF_8)
+                .replace("+", "%20");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + encodedFileName + "\"")
+                .body(report.getFileData());
     }
 
     @Operation(summary = "독후감 수정 (재제출)", description = "보완 요청된 독후감을 수정하여 재제출합니다.")

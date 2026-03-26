@@ -71,6 +71,11 @@ public class UserService {
                         .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
 
                 User user = userRepository.findByEmployeeNo(req.getEmployeeNo())
+                        .map(existing -> {
+                            existing.setName(req.getName());
+                            existing.setTeam(req.getTeam());
+                            return existing;
+                        })
                         .orElseGet(() -> userRepository.save(User.builder()
                                 .employeeNo(req.getEmployeeNo())
                                 .name(req.getName())
