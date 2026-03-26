@@ -297,11 +297,11 @@
             <h1>KFTC 독후감 제출 시스템</h1>
             <p class="subtitle">API 명세서 (REST API Specification)</p>
         </div>
-        <span class="version-badge">v1.0</span>
+        <span class="version-badge">v2.0</span>
     </div>
     <div class="meta">
         <span>프로젝트: 금융결제원 독서경영 독후감 제출 시스템</span>
-        <span>작성일: 2026-03-25</span>
+        <span>작성일: 2026-03-26</span>
     </div>
 </div>
 
@@ -313,8 +313,8 @@
         <div class="base-row"><span class="base-label">Base URL</span><span class="base-value"><code>https://{domain}/api</code></span></div>
         <div class="base-row"><span class="base-label">Content-Type</span><span class="base-value"><code>application/json</code> (파일 업로드 시 <code>multipart/form-data</code>)</span></div>
         <div class="base-row"><span class="base-label">인증 방식</span><span class="base-value">관리자 API — JWT Bearer Token (<code>Authorization: Bearer {token}</code>)</span></div>
-        <div class="base-row"><span class="base-label">파일 형식</span><span class="base-value">독후감 / 양식: <code>.hwp</code> | 명단 업로드: <code>.xlsx</code>, <code>.xls</code></span></div>
-        <div class="base-row"><span class="base-label">파일 저장</span><span class="base-value">hwp 파일은 바이너리 변환 후 DB(LONGBLOB)에 직접 저장</span></div>
+        <div class="base-row"><span class="base-label">파일 형식</span><span class="base-value">독후감 / 양식: <code>.hwp</code>, <code>.hwpx</code></span></div>
+        <div class="base-row"><span class="base-label">파일 저장</span><span class="base-value">hwp/hwpx 파일은 바이너리 변환 후 DB(LONGBLOB)에 직접 저장</span></div>
     </div>
 
     <!-- TOC -->
@@ -323,13 +323,15 @@
         <p class="toc-section-title">사용자 API</p>
         <div class="toc-grid">
             <a href="#api-1"><span class="method-tag-sm method-post">POST</span>/api/reports</a>
-            <a href="#api-5"><span class="method-tag-sm method-get">GET</span>/api/reports/search</a>
-            <a href="#api-2"><span class="method-tag-sm method-get">GET</span>/api/courses/{courseId}/reports</a>
             <a href="#api-6"><span class="method-tag-sm method-put">PUT</span>/api/reports/{reportId}</a>
-            <a href="#api-3"><span class="method-tag-sm method-get">GET</span>/api/reports/{reportId}</a>
+            <a href="#api-2"><span class="method-tag-sm method-get">GET</span>/api/courses/{courseId}/reports</a>
             <a href="#api-7"><span class="method-tag-sm method-delete">DEL</span>/api/reports/{reportId}</a>
-            <a href="#api-4"><span class="method-tag-sm method-get">GET</span>/api/courses</a>
+            <a href="#api-3"><span class="method-tag-sm method-get">GET</span>/api/reports/{reportId}</a>
             <a href="#api-8"><span class="method-tag-sm method-get">GET</span>/api/templates/download</a>
+            <a href="#api-4"><span class="method-tag-sm method-get">GET</span>/api/courses</a>
+            <a href="#api-23"><span class="method-tag-sm method-get">GET</span>/api/templates/info</a>
+            <a href="#api-24"><span class="method-tag-sm method-get">GET</span>/api/courses/{courseId}</a>
+            <a href="#api-25"><span class="method-tag-sm method-get">GET</span>/api/employees/{employeeNo}</a>
         </div>
         <p class="toc-section-title">관리자 API</p>
         <div class="toc-grid">
@@ -337,7 +339,6 @@
             <a href="#api-16"><span class="method-tag-sm method-post">POST</span>/api/admin/courses</a>
             <a href="#api-10-1"><span class="method-tag-sm method-get">GET</span>/api/admin/users</a>
             <a href="#api-17"><span class="method-tag-sm method-put">PUT</span>/api/admin/courses/{courseId}</a>
-            <a href="#api-10"><span class="method-tag-sm method-post">POST</span>/api/admin/users/upload</a>
             <a href="#api-11"><span class="method-tag-sm method-post">POST</span>/api/admin/users</a>
             <a href="#api-18"><span class="method-tag-sm method-delete">DEL</span>/api/admin/courses/{courseId}</a>
             <a href="#api-12"><span class="method-tag-sm method-put">PUT</span>/api/admin/users</a>
@@ -348,6 +349,8 @@
             <a href="#api-21"><span class="method-tag-sm method-patch">PATCH</span>/api/admin/reports/approve</a>
             <a href="#api-15"><span class="method-tag-sm method-delete">DEL</span>/api/admin/templates/{templateId}</a>
             <a href="#api-22"><span class="method-tag-sm method-patch">PATCH</span>/api/admin/reports/supplement</a>
+            <a href="#api-26"><span class="method-tag-sm method-get">GET</span>/api/admin/templates</a>
+            <a href="#api-27"><span class="method-tag-sm method-get">GET</span>/api/admin/templates/{templateId}/download</a>
         </div>
     </div>
 
@@ -373,7 +376,7 @@
                 <tr><td>courseId</td><td><span class="type-tag">Long</span></td><td><span class="required">필수</span></td><td>독서과정 ID</td></tr>
                 <tr><td>employeeNo</td><td><span class="type-tag">String</span></td><td><span class="required">필수</span></td><td>사번</td></tr>
                 <tr><td>title</td><td><span class="type-tag">String</span></td><td><span class="required">필수</span></td><td>독후감 제목</td></tr>
-                <tr><td>file</td><td><span class="type-tag">File</span></td><td><span class="required">필수</span></td><td>hwp 파일 (1개, .hwp만 허용)</td></tr>
+                <tr><td>file</td><td><span class="type-tag">File</span></td><td><span class="required">필수</span></td><td>hwp/hwpx 파일 (1개, .hwp 또는 .hwpx만 허용)</td></tr>
             </table>
             <h4>Response — 201 Created</h4>
             <div class="code-block"><span class="comment">// 독후감 등록 성공</span>
@@ -482,39 +485,6 @@
         </div>
     </div>
 
-    <!-- API 5: 독후감 검색 -->
-    <div class="api-card" id="api-5">
-        <div class="api-header">
-            <span class="method-tag method-get">GET</span>
-            <span class="api-path">/api/reports/search</span>
-            <span class="api-desc">독후감 검색 (사번 / 이름)</span>
-            <span class="api-ref">기능 1.3.1 ~ 1.3.2</span>
-        </div>
-        <div class="api-body">
-            <h4>Query Parameters</h4>
-            <table class="param-table">
-                <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
-                <tr><td>employeeNo</td><td><span class="type-tag">String</span></td><td><span class="optional">선택</span></td><td>사번으로 검색</td></tr>
-                <tr><td>name</td><td><span class="type-tag">String</span></td><td><span class="optional">선택</span></td><td>이름으로 검색</td></tr>
-            </table>
-            <div class="api-note">employeeNo 또는 name 중 최소 하나는 필수입니다.</div>
-            <h4>Response — 200 OK</h4>
-            <div class="code-block">{
-  <span class="key">"results"</span>: [
-    {
-      <span class="key">"reportId"</span>: <span class="num">1</span>,
-      <span class="key">"courseName"</span>: <span class="str">"26년 상반기"</span>,
-      <span class="key">"name"</span>: <span class="str">"김민수"</span>,
-      <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
-      <span class="key">"title"</span>: <span class="str">"데이터 중심 애플리케이션 설계 독후감"</span>,
-      <span class="key">"status"</span>: <span class="str">"승인"</span>,
-      <span class="key">"submittedAt"</span>: <span class="str">"2026-03-20"</span>
-    }
-  ]
-}</div>
-        </div>
-    </div>
-
     <!-- API 6: 독후감 수정 -->
     <div class="api-card" id="api-6">
         <div class="api-header">
@@ -594,6 +564,86 @@
         </div>
     </div>
 
+    <!-- API 23: 양식 정보 조회 -->
+    <div class="api-card" id="api-23">
+        <div class="api-header">
+            <span class="method-tag method-get">GET</span>
+            <span class="api-path">/api/templates/info</span>
+            <span class="api-desc">양식 정보 조회</span>
+        </div>
+        <div class="api-body">
+            <h4>Response — 200 OK</h4>
+            <div class="code-block">{
+  <span class="key">"templateId"</span>: <span class="num">4</span>,
+  <span class="key">"fileName"</span>: <span class="str">"KFTC_독후감_양식_v4.hwp"</span>,
+  <span class="key">"fileSize"</span>: <span class="num">131072</span>,
+  <span class="key">"uploadedAt"</span>: <span class="str">"2026-03-25T09:00:00"</span>
+}</div>
+            <h4>Status Codes</h4>
+            <div class="status-list">
+                <span class="status-item status-2xx"><code>200</code> 조회 성공</span>
+                <span class="status-item status-4xx"><code>404</code> 사용중인 양식 없음</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- API 24: 독서과정 상세 조회 -->
+    <div class="api-card" id="api-24">
+        <div class="api-header">
+            <span class="method-tag method-get">GET</span>
+            <span class="api-path">/api/courses/{courseId}</span>
+            <span class="api-desc">독서과정 상세 조회</span>
+        </div>
+        <div class="api-body">
+            <h4>Path Parameters</h4>
+            <table class="param-table">
+                <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
+                <tr><td>courseId</td><td><span class="type-tag">Long</span></td><td><span class="required">필수</span></td><td>독서과정 ID</td></tr>
+            </table>
+            <h4>Response — 200 OK</h4>
+            <div class="code-block">{
+  <span class="key">"courseId"</span>: <span class="num">3</span>,
+  <span class="key">"name"</span>: <span class="str">"26년 상반기"</span>,
+  <span class="key">"startDate"</span>: <span class="str">"2026-01-01"</span>,
+  <span class="key">"endDate"</span>: <span class="str">"2026-06-30"</span>,
+  <span class="key">"description"</span>: <span class="str">"2026년 상반기 독서경영 과정"</span>,
+  <span class="key">"status"</span>: <span class="str">"진행중"</span>
+}</div>
+            <h4>Status Codes</h4>
+            <div class="status-list">
+                <span class="status-item status-2xx"><code>200</code> 조회 성공</span>
+                <span class="status-item status-4xx"><code>404</code> 과정 없음</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- API 25: 사원 조회 -->
+    <div class="api-card" id="api-25">
+        <div class="api-header">
+            <span class="method-tag method-get">GET</span>
+            <span class="api-path">/api/employees/{employeeNo}</span>
+            <span class="api-desc">사원 조회</span>
+        </div>
+        <div class="api-body">
+            <h4>Path Parameters</h4>
+            <table class="param-table">
+                <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
+                <tr><td>employeeNo</td><td><span class="type-tag">String</span></td><td><span class="required">필수</span></td><td>사번</td></tr>
+            </table>
+            <h4>Response — 200 OK</h4>
+            <div class="code-block">{
+  <span class="key">"employeeNo"</span>: <span class="str">"20210001"</span>,
+  <span class="key">"name"</span>: <span class="str">"김민수"</span>,
+  <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>
+}</div>
+            <h4>Status Codes</h4>
+            <div class="status-list">
+                <span class="status-item status-2xx"><code>200</code> 조회 성공</span>
+                <span class="status-item status-4xx"><code>404</code> 사원 없음</span>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== 관리자 API ===================== -->
     <div class="section-divider">
         <h2>관리자 API</h2>
@@ -665,34 +715,6 @@
       <span class="key">"team"</span>: <span class="str">"IT개발팀"</span>,
       <span class="key">"enrolledAt"</span>: <span class="str">"2026-01-15T09:00:00"</span>
     }
-  ]
-}</div>
-        </div>
-    </div>
-
-    <!-- API 10: 사용자 엑셀 업로드 -->
-    <div class="api-card" id="api-10">
-        <div class="api-header">
-            <span class="method-tag method-post">POST</span>
-            <span class="api-path">/api/admin/users/upload</span>
-            <span class="api-desc">신청 명단 엑셀 업로드 (대량 등록)</span>
-            <span class="api-ref">기능 2.2.1</span>
-        </div>
-        <div class="api-body">
-            <h4>Request — multipart/form-data</h4>
-            <table class="param-table">
-                <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
-                <tr><td>courseId</td><td><span class="type-tag">Long</span></td><td><span class="required">필수</span></td><td>등록 대상 독서과정 ID</td></tr>
-                <tr><td>file</td><td><span class="type-tag">File</span></td><td><span class="required">필수</span></td><td>엑셀 파일 (.xlsx, .xls / 최대 500명)</td></tr>
-            </table>
-            <div class="api-note">엑셀 필수 컬럼: 사번, 이름, 팀</div>
-            <h4>Response — 200 OK</h4>
-            <div class="code-block">{
-  <span class="key">"totalRows"</span>: <span class="num">24</span>,
-  <span class="key">"successCount"</span>: <span class="num">23</span>,
-  <span class="key">"failCount"</span>: <span class="num">1</span>,
-  <span class="key">"errors"</span>: [
-    { <span class="key">"row"</span>: <span class="num">15</span>, <span class="key">"reason"</span>: <span class="str">"사번 누락"</span> }
   ]
 }</div>
         </div>
@@ -817,7 +839,7 @@
             <h4>Request — multipart/form-data</h4>
             <table class="param-table">
                 <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
-                <tr><td>file</td><td><span class="type-tag">File</span></td><td><span class="required">필수</span></td><td>hwp 양식 파일</td></tr>
+                <tr><td>file</td><td><span class="type-tag">File</span></td><td><span class="required">필수</span></td><td>hwp/hwpx 양식 파일</td></tr>
             </table>
             <div class="api-note">기존 "사용중" 양식이 있으면 자동으로 "미사용"으로 변경되고 새 양식이 "사용중"으로 설정됩니다.</div>
             <h4>Response — 201 Created</h4>
@@ -1030,6 +1052,64 @@
         </div>
     </div>
 
+    <!-- API 26: 양식 목록 조회 (관리자) -->
+    <div class="api-card" id="api-26">
+        <div class="api-header">
+            <span class="method-tag method-get">GET</span>
+            <span class="api-path">/api/admin/templates</span>
+            <span class="api-desc">양식 목록 조회 (관리자)</span>
+        </div>
+        <div class="api-body">
+            <h4>Response — 200 OK</h4>
+            <div class="code-block">{
+  <span class="key">"templates"</span>: [
+    {
+      <span class="key">"templateId"</span>: <span class="num">4</span>,
+      <span class="key">"fileName"</span>: <span class="str">"KFTC_독후감_양식_v4.hwp"</span>,
+      <span class="key">"fileSize"</span>: <span class="num">131072</span>,
+      <span class="key">"status"</span>: <span class="str">"사용중"</span>,
+      <span class="key">"uploadedAt"</span>: <span class="str">"2026-03-25T09:00:00"</span>
+    },
+    {
+      <span class="key">"templateId"</span>: <span class="num">3</span>,
+      <span class="key">"fileName"</span>: <span class="str">"KFTC_독후감_양식_v3.hwp"</span>,
+      <span class="key">"fileSize"</span>: <span class="num">122880</span>,
+      <span class="key">"status"</span>: <span class="str">"미사용"</span>,
+      <span class="key">"uploadedAt"</span>: <span class="str">"2026-02-10T09:00:00"</span>
+    }
+  ]
+}</div>
+        </div>
+    </div>
+
+    <!-- API 27: 양식 다운로드 (관리자) -->
+    <div class="api-card" id="api-27">
+        <div class="api-header">
+            <span class="method-tag method-get">GET</span>
+            <span class="api-path">/api/admin/templates/{templateId}/download</span>
+            <span class="api-desc">양식 다운로드 (관리자)</span>
+        </div>
+        <div class="api-body">
+            <h4>Path Parameters</h4>
+            <table class="param-table">
+                <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
+                <tr><td>templateId</td><td><span class="type-tag">Long</span></td><td><span class="required">필수</span></td><td>양식 ID</td></tr>
+            </table>
+            <h4>Response — 200 OK</h4>
+            <table class="param-table">
+                <tr><th>헤더</th><th>값</th></tr>
+                <tr><td>Content-Type</td><td>application/octet-stream</td></tr>
+                <tr><td>Content-Disposition</td><td>attachment; filename="KFTC_독후감_양식.hwp"</td></tr>
+            </table>
+            <div class="api-note">지정된 양식 파일의 바이너리 데이터를 반환합니다.</div>
+            <h4>Status Codes</h4>
+            <div class="status-list">
+                <span class="status-item status-2xx"><code>200</code> 다운로드 성공</span>
+                <span class="status-item status-4xx"><code>404</code> 양식 없음</span>
+            </div>
+        </div>
+    </div>
+
     <!-- 공통 에러 -->
     <div class="section-divider">
         <h2>공통 사항</h2>
@@ -1041,7 +1121,7 @@
         <div class="code-block">{
   <span class="key">"status"</span>: <span class="num">400</span>,
   <span class="key">"error"</span>: <span class="str">"Bad Request"</span>,
-  <span class="key">"message"</span>: <span class="str">"유효하지 않은 파일 형식입니다. .hwp 파일만 업로드 가능합니다."</span>,
+  <span class="key">"message"</span>: <span class="str">"유효하지 않은 파일 형식입니다. .hwp 또는 .hwpx 파일만 업로드 가능합니다."</span>,
   <span class="key">"timestamp"</span>: <span class="str">"2026-03-25T10:30:00"</span>
 }</div>
         <h4 style="font-size:12px; font-weight:700; color:#718096; text-transform:uppercase; letter-spacing:0.5px; margin-top:16px; margin-bottom:8px;">공통 Status Codes</h4>

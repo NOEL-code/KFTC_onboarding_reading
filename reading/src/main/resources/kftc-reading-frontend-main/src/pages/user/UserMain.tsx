@@ -18,6 +18,7 @@ interface Course {
   id: number;
   name: string;
   status: '진행중' | '완료' | '종료';
+  startDate: string;
   period: string;
 }
 
@@ -77,13 +78,20 @@ export default function UserMain() {
           const start = String(c.startDate ?? '').slice(0, 7).replace('-', '.');
           const end   = String(c.endDate   ?? '').slice(0, 7).replace('-', '.');
           return {
-            id:     Number(c.courseId ?? c.id),
-            name:   String(c.name),
-            status: (c.status ?? '완료') as '진행중' | '완료' | '종료',
-            period: start && end ? `${start} ~ ${end}` : '',
+            id:        Number(c.courseId ?? c.id),
+            name:      String(c.name),
+            status:    (c.status ?? '완료') as '진행중' | '완료' | '종료',
+            startDate: String(c.startDate ?? ''),
+            period:    start && end ? `${start} ~ ${end}` : '',
           };
         });
-        const sorted = [...list].sort((a, b) => b.id - a.id).slice(0, 3);
+        // 종료되지 않은 과정 우선, 그 안에서 시작일 내림차순
+        const sorted = [...list].sort((a, b) => {
+          const aEnded = a.status === '종료' ? 1 : 0;
+          const bEnded = b.status === '종료' ? 1 : 0;
+          if (aEnded !== bEnded) return aEnded - bEnded;
+          return b.startDate.localeCompare(a.startDate);
+        });
         setCourses(sorted);
       })
       .catch(() => {});

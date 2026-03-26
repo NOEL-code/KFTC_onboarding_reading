@@ -36,7 +36,7 @@ export default function AppHeader(props: AppHeaderProps) {
           KFTC
         </Typography>
         <Typography component="span" sx={{ fontSize: 14, color: '#666666' }}>
-          독후감 제출 시스템
+          독서과정
         </Typography>
       </Box>
 

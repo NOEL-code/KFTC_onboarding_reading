@@ -196,17 +196,7 @@ erDiagram
         timestamp updated_at
     }
 
-    NOTICE {
-        bigint id PK
-        varchar title
-        text content
-        bigint created_by FK
-        timestamp created_at
-        timestamp updated_at
-    }
-
     ADMIN ||--o{ REPORT_TEMPLATE : "업로드"
-    ADMIN ||--o{ NOTICE : "작성"
     USER ||--o{ COURSE_ENROLLMENT : "신청"
     READING_COURSE ||--o{ COURSE_ENROLLMENT : "포함"
     COURSE_ENROLLMENT ||--o| BOOK_REPORT : "제출"
@@ -221,12 +211,6 @@ erDiagram
                 <span class="rel-arrow">1 ──── 0..N</span>
                 <span class="rel-label">REPORT_TEMPLATE</span>
                 <span>관리자가 독후감 양식을 업로드/관리</span>
-            </div>
-            <div class="rel-item">
-                <span class="rel-label">ADMIN</span>
-                <span class="rel-arrow">1 ──── 0..N</span>
-                <span class="rel-label">NOTICE</span>
-                <span>관리자가 공지사항을 작성</span>
             </div>
             <div class="rel-item">
                 <span class="rel-label">USER</span>
@@ -270,7 +254,7 @@ erDiagram
                 <!-- USER -->
                 <div class="entity-card">
                     <h3>USER <span class="badge">사용자</span></h3>
-                    <p class="desc">독서과정 참여자 (엑셀 일괄등록 또는 개별 추가)</p>
+                    <p class="desc">독서과정 참여자 (관리자가 개별 추가)</p>
                     <table>
                         <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
                         <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>사용자 ID</td></tr>
@@ -285,7 +269,7 @@ erDiagram
                 <!-- READING_COURSE -->
                 <div class="entity-card">
                     <h3>READING_COURSE <span class="badge">독서과정</span></h3>
-                    <p class="desc">반기별 독서경영 과정 (진행중/완료 상태)</p>
+                    <p class="desc">반기별 독서경영 과정 (진행중/완료/종료 상태)</p>
                     <table>
                         <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
                         <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>과정 ID</td></tr>
@@ -293,7 +277,7 @@ erDiagram
                         <tr><td>start_date</td><td>DATE</td><td>NOT NULL</td><td>시작일</td></tr>
                         <tr><td>end_date</td><td>DATE</td><td>NOT NULL</td><td>종료일</td></tr>
                         <tr><td>description</td><td>TEXT</td><td></td><td>과정 설명</td></tr>
-                        <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>진행중 / 완료</td></tr>
+                        <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>진행중 / 완료 / 종료</td></tr>
                         <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>생성일시</td></tr>
                         <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>수정일시</td></tr>
                     </table>
@@ -315,14 +299,14 @@ erDiagram
                 <!-- BOOK_REPORT -->
                 <div class="entity-card">
                     <h3>BOOK_REPORT <span class="badge">독후감</span></h3>
-                    <p class="desc">과정 참여자가 제출하는 독후감 (hwp 파일 1개 제한)</p>
+                    <p class="desc">과정 참여자가 제출하는 독후감 (hwp/hwpx 파일 1개 제한)</p>
                     <table>
                         <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
                         <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>독후감 ID</td></tr>
                         <tr><td>enrollment_id</td><td>BIGINT</td><td><span class="fk">FK</span> UK</td><td>과정신청 ID (1:1)</td></tr>
                         <tr><td>title</td><td>VARCHAR(200)</td><td></td><td>독후감 제목</td></tr>
-                        <tr><td>file_name</td><td>VARCHAR(255)</td><td></td><td>원본 hwp 파일명</td></tr>
-                        <tr><td>file_data</td><td>LONGBLOB</td><td></td><td>hwp 파일 바이너리 데이터</td></tr>
+                        <tr><td>file_name</td><td>VARCHAR(255)</td><td></td><td>원본 hwp/hwpx 파일명</td></tr>
+                        <tr><td>file_data</td><td>LONGBLOB</td><td></td><td>hwp/hwpx 파일 바이너리 데이터</td></tr>
                         <tr><td>file_size</td><td>BIGINT</td><td></td><td>파일 크기 (bytes)</td></tr>
                         <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>미제출 / 제출 / 승인 / 보완</td></tr>
                         <tr><td>submitted_at</td><td>TIMESTAMP</td><td></td><td>제출일시</td></tr>
@@ -333,12 +317,12 @@ erDiagram
                 <!-- REPORT_TEMPLATE -->
                 <div class="entity-card">
                     <h3>REPORT_TEMPLATE <span class="badge">독후감 양식</span></h3>
-                    <p class="desc">모든 과정에 공통 적용되는 한글(hwp) 양식 파일</p>
+                    <p class="desc">모든 과정에 공통 적용되는 한글(hwp/hwpx) 양식 파일</p>
                     <table>
                         <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
                         <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>양식 ID</td></tr>
-                        <tr><td>file_name</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>원본 hwp 파일명</td></tr>
-                        <tr><td>file_data</td><td>LONGBLOB</td><td>NOT NULL</td><td>hwp 양식 파일 바이너리 데이터</td></tr>
+                        <tr><td>file_name</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>원본 hwp/hwpx 파일명</td></tr>
+                        <tr><td>file_data</td><td>LONGBLOB</td><td>NOT NULL</td><td>hwp/hwpx 양식 파일 바이너리 데이터</td></tr>
                         <tr><td>file_size</td><td>BIGINT</td><td></td><td>파일 크기</td></tr>
                         <tr><td>uploaded_by</td><td>BIGINT</td><td><span class="fk">FK</span></td><td>업로드한 관리자</td></tr>
                         <tr><td>status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>사용중 / 미사용</td></tr>
@@ -347,20 +331,6 @@ erDiagram
                     </table>
                 </div>
 
-                <!-- NOTICE -->
-                <div class="entity-card">
-                    <h3>NOTICE <span class="badge">공지사항</span></h3>
-                    <p class="desc">사용자 메인 페이지에 표시되는 공지사항</p>
-                    <table>
-                        <tr><th>컬럼</th><th>타입</th><th>제약</th><th>설명</th></tr>
-                        <tr><td>id</td><td>BIGINT</td><td><span class="pk">PK</span></td><td>공지 ID</td></tr>
-                        <tr><td>title</td><td>VARCHAR(200)</td><td>NOT NULL</td><td>제목</td></tr>
-                        <tr><td>content</td><td>TEXT</td><td></td><td>내용</td></tr>
-                        <tr><td>created_by</td><td>BIGINT</td><td><span class="fk">FK</span></td><td>작성한 관리자</td></tr>
-                        <tr><td>created_at</td><td>TIMESTAMP</td><td></td><td>작성일시</td></tr>
-                        <tr><td>updated_at</td><td>TIMESTAMP</td><td></td><td>수정일시</td></tr>
-                    </table>
-                </div>
             </div>
         </div>
     </div>

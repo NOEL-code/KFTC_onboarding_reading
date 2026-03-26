@@ -48,7 +48,7 @@ const ACTION_CONFIG: Record<
 > = {
   미제출:   { label: '제출', color: '#0064dd', action: 'submit' },
   제출완료: { label: '조회', color: '#0064dd', action: 'view'   },
-  보완:     { label: '보완', color: '#cc3333', action: 'submit' },
+  보완:     { label: '사유확인', color: '#cc3333', action: 'view'   },
   승인:     { label: '조회', color: '#0064dd', action: 'view'   },
 };
 

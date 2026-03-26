@@ -51,14 +51,6 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getReportDetail(reportId));
     }
 
-    @Operation(summary = "독후감 검색", description = "사번 또는 이름으로 독후감을 검색합니다.")
-    @GetMapping("/reports/search")
-    public ResponseEntity<ReportSearchResponse> searchReports(
-            @RequestParam(required = false) String employeeNo,
-            @RequestParam(required = false) String name) {
-        return ResponseEntity.ok(reportService.searchReports(employeeNo, name));
-    }
-
     @Operation(summary = "독후감 HWP 다운로드", description = "독후감 파일을 다운로드합니다.")
     @GetMapping("/reports/{reportId}/download")
     public ResponseEntity<byte[]> downloadReport(@PathVariable Long reportId) {
