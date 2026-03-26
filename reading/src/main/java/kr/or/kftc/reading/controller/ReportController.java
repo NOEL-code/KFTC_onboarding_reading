@@ -1,7 +1,6 @@
 package kr.or.kftc.reading.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.or.kftc.reading.dto.*;
 import kr.or.kftc.reading.entity.BookReport;
