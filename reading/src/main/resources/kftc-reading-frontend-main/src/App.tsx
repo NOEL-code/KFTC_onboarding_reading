@@ -36,10 +36,10 @@ export default function App() {
           {/* ── Admin routes (JWT required) ────────────────────────── */}
           <Route path="/admin" element={<RequireAdmin />}>
             <Route element={<AdminLayout />}>
-              <Route index element={<Navigate to="/admin/reports" replace />} />
-              <Route path="reports"   element={<ReportManagement />} />
-              <Route path="users"     element={<UserManagement />} />
+              <Route index element={<Navigate to="/admin/courses" replace />} />
               <Route path="courses"   element={<CourseManagement />} />
+              <Route path="courses/:courseId/reports" element={<ReportManagement />} />
+              <Route path="users"     element={<UserManagement />} />
               <Route path="templates" element={<TemplateManagement />} />
             </Route>
           </Route>

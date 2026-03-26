@@ -21,6 +21,10 @@ interface LocationState {
   courseName?: string;
   courseId?: string;
   action?: 'submit' | 'view';
+  employeeNo?: string;
+  empName?: string;
+  empDept?: string;
+  reportId?: number;
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
@@ -33,8 +37,13 @@ export default function Submission() {
 
   const courseName = state.courseName ?? '';
   const courseId   = state.courseId   ?? '';
-  // 'submit' action with an existing reportId means resubmission (PUT)
-  const isUpdate   = state.action === 'submit' && !!userId;
+  // reportId가 있으면 재제출(PUT), 없거나 'new'이면 신규 제출(POST)
+  const reportId   = state.reportId ?? (userId && userId !== 'new' ? Number(userId) : 0);
+  const isUpdate   = reportId > 0;
+
+  // 참여자 목록에서 넘어온 경우: 사번 검증 모드 (직접 입력해서 일치해야 함)
+  const expectedEmpNo = state.employeeNo ?? '';
+  const hasExpected   = !!(expectedEmpNo && state.empName);
 
   const [employeeNo, setEmployeeNo]   = useState('');
   const [empName, setEmpName]         = useState('');
@@ -45,20 +54,37 @@ export default function Submission() {
   const [submitting, setSubmitting]   = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // ── Fetch employee name/dept when employee number changes ──────────────────
+  // ── 사번 입력 시 검증 ────────────────────────────────────────────────────────
+
+  const empNoMatched = hasExpected && employeeNo.trim() === expectedEmpNo;
 
   useEffect(() => {
     const trimmed = employeeNo.trim();
+
+    // 참여자 목록에서 넘어온 경우: 사번 일치 여부로 이름/팀 표시
+    if (hasExpected) {
+      if (trimmed === expectedEmpNo) {
+        setEmpName(state.empName ?? '');
+        setEmpDept(state.empDept ?? '');
+        setEmpError('');
+      } else {
+        setEmpName('');
+        setEmpDept('');
+        setEmpError(trimmed.length >= 5 ? '사번이 일치하지 않습니다.' : '');
+      }
+      return;
+    }
+
+    // 직접 접근한 경우: API로 사번 조회
     if (!trimmed) {
       setEmpName('');
       setEmpDept('');
       setEmpError('');
       return;
     }
-    if (trimmed.length !== 7) {
+    if (trimmed.length < 5) {
       setEmpName('');
       setEmpDept('');
-      setEmpError('사번은 7자리입니다.');
       return;
     }
     const timer = setTimeout(() => {
@@ -77,12 +103,13 @@ export default function Submission() {
         .finally(() => setEmpLoading(false));
     }, 500);
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employeeNo]);
 
   // ── Derived state ──────────────────────────────────────────────────────────
 
-  const empNoFilled = employeeNo.trim().length === 7;
-  const canSubmit   = empNoFilled && empName !== '' && file !== null;
+  const empVerified = hasExpected ? empNoMatched : (employeeNo.trim().length >= 5 && empName !== '');
+  const canSubmit   = empVerified && file !== null;
 
   // ── Submit handler ─────────────────────────────────────────────────────────
 
@@ -98,7 +125,7 @@ export default function Submission() {
       formData.append('courseId', courseId);
 
       if (isUpdate) {
-        await updateReport(userId!, formData);
+        await updateReport(String(reportId), formData);
       } else {
         await submitReport(formData);
       }
@@ -148,33 +175,30 @@ export default function Submission() {
           }}
         >
           <InfoRow label="독서과정명" value={courseName} />
-          <InfoRow label="이름"       value={empName || (empLoading ? '조회 중...' : '-')} />
-          <InfoRow label="팀"         value={empDept || (empLoading ? '조회 중...' : '-')} />
+          <InfoRow label="이름"       value={(hasExpected ? state.empName : empName) || (empLoading ? '조회 중...' : '-')} />
+          <InfoRow label="팀"         value={(hasExpected ? state.empDept : empDept) || (empLoading ? '조회 중...' : '-')} />
         </Box>
 
-        {/* 4. Employee number input */}
+        {/* 4. Employee number input — 항상 직접 입력 */}
         <FormField label="사번" required htmlFor="employee-no" fontSize={14}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TextField
               id="employee-no"
               size="small"
               fullWidth
-              placeholder="사번 7자리를 입력해주세요"
+              placeholder="본인의 사번을 입력해주세요"
               value={employeeNo}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, '');
-                setEmployeeNo(digits);
-              }}
-              inputProps={{ maxLength: 7, inputMode: 'numeric' }}
+              onChange={(e) => setEmployeeNo(e.target.value.trim())}
+              inputProps={{ maxLength: 20 }}
             />
             {empLoading && <CircularProgress size={18} sx={{ flexShrink: 0 }} />}
           </Box>
           {empError && (
             <Typography sx={{ fontSize: 12, color: '#cc3333' }}>{empError}</Typography>
           )}
-          {!empError && !empName && (
+          {!empError && !empName && !empLoading && (
             <Typography sx={{ fontSize: 12, color: '#888888' }}>
-              7자리 사번을 입력하면 이름과 팀이 자동으로 조회됩니다.
+              {hasExpected ? '본인 확인을 위해 사번을 입력해주세요.' : '사번을 입력하면 이름과 팀이 자동으로 조회됩니다.'}
             </Typography>
           )}
           {!empError && empName && (
@@ -185,10 +209,10 @@ export default function Submission() {
         </FormField>
 
         {/* 5. File upload */}
-        <FormField label="독후감 파일 업로드 (.hwp)" fontSize={14}>
+        <FormField label="독후감 파일 업로드 (.hwp, .hwpx)" fontSize={14}>
           <FileDropzone
-            accept=".hwp"
-            disabled={!empNoFilled || !empName}
+            accept=".hwp,.hwpx"
+            disabled={!empVerified}
             file={file}
             onFileChange={setFile}
           />

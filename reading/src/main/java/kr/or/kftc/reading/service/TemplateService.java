@@ -27,8 +27,9 @@ public class TemplateService {
     @Transactional
     public Map<String, Object> uploadTemplate(MultipartFile file, Long adminId) {
         String fileName = file.getOriginalFilename();
-        if (fileName == null || !fileName.endsWith(".hwp")) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "hwp 파일만 업로드 가능합니다.");
+        String lower = fileName == null ? "" : fileName.toLowerCase();
+        if (!lower.endsWith(".hwp") && !lower.endsWith(".hwpx")) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "hwp 또는 hwpx 파일만 업로드 가능합니다.");
         }
 
         // 기존 사용중 양식을 미사용으로 변경

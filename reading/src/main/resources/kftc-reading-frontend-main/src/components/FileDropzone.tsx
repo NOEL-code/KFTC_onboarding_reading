@@ -25,7 +25,7 @@ export default function FileDropzone({
   file,
   onFileChange,
   mainText = '파일을 여기에 드래그하거나 클릭하여 업로드',
-  subText = '.hwp 파일만 업로드 가능합니다',
+  subText = '.hwp, .hwpx 파일만 업로드 가능합니다',
 }: FileDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 

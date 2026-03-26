@@ -72,8 +72,8 @@ public class ReportService {
         courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
 
-        // 모든 수강생을 포함 (미제출자 포함)
-        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        // 모든 수강생을 포함 (미제출자 포함) — User를 JOIN FETCH로 즉시 로딩
+        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseIdWithUser(courseId);
 
         List<ReportListResponse.ReportSummary> allSummaries = enrollments.stream()
                 .map(e -> {
@@ -219,8 +219,8 @@ public class ReportService {
 
     public AdminReportListResponse getAdminReports(Long courseId, String status, String team,
                                                     String name, int page, int size) {
-        // 전체 enrollment 조회 (해당 과정)
-        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
+        // 전체 enrollment 조회 (해당 과정) — User를 JOIN FETCH로 즉시 로딩
+        List<CourseEnrollment> enrollments = enrollmentRepository.findByCourseIdWithUser(courseId);
 
         // enrollment별로 report 매핑
         List<AdminReportListResponse.AdminReportItem> allItems = enrollments.stream()
@@ -316,9 +316,10 @@ public class ReportService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "파일을 선택해주세요.");
         }
         String fileName = file.getOriginalFilename();
-        if (fileName == null || !fileName.toLowerCase().endsWith(".hwp")) {
+        String lower = fileName == null ? "" : fileName.toLowerCase();
+        if (!lower.endsWith(".hwp") && !lower.endsWith(".hwpx")) {
             throw new BusinessException(HttpStatus.BAD_REQUEST,
-                    "유효하지 않은 파일 형식입니다. .hwp 파일만 업로드 가능합니다.");
+                    "유효하지 않은 파일 형식입니다. .hwp 또는 .hwpx 파일만 업로드 가능합니다.");
         }
     }
 }

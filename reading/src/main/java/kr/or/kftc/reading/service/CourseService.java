@@ -34,6 +34,7 @@ public class CourseService {
                     return CourseListResponse.CourseItem.builder()
                             .courseId(c.getId())
                             .name(c.getName())
+                            .description(c.getDescription() != null ? c.getDescription() : "")
                             .status(c.getStatus().name())
                             .startDate(c.getStartDate().toString())
                             .endDate(c.getEndDate().toString())

@@ -5,9 +5,8 @@ import AppHeader from '../components/AppHeader.tsx';
 import TabNavigation from '../components/TabNavigation.tsx';
 
 const TABS = [
-  { label: '독후감 관리', path: '/admin/reports' },
-  { label: '사용자 관리', path: '/admin/users' },
   { label: '독서 과정 관리', path: '/admin/courses' },
+  { label: '사용자 관리', path: '/admin/users' },
   { label: '양식 관리', path: '/admin/templates' },
 ];
 
@@ -15,7 +14,7 @@ function getActiveTab(pathname: string): string {
   const match = TABS.slice()
     .reverse()
     .find((t) => pathname === t.path || pathname.startsWith(t.path + '/'));
-  return match?.path ?? '/admin/reports';
+  return match?.path ?? '/admin/courses';
 }
 
 export default function AdminLayout() {

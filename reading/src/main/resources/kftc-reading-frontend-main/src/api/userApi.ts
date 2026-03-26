@@ -19,10 +19,3 @@ export function updateUsers(courseId: number, users: { userId: number; name?: st
 export function deleteUsers(courseId: number, userIds: number[]) {
   return axios.delete('/api/admin/users', { data: { courseId, userIds } });
 }
-
-export function uploadUsersExcel(courseId: string, file: File) {
-  const formData = new FormData();
-  formData.append('courseId', courseId);
-  formData.append('file', file);
-  return axios.post('/api/admin/users/upload', formData);
-}

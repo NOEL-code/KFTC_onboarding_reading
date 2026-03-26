@@ -3,12 +3,16 @@ import {
   Box,
   Button,
   Link,
+  MenuItem,
+  Select,
   TextField,
   Typography,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { useNavigate } from 'react-router-dom';
 import {
   fetchCourses,
   createCourse as createCourseApi,
@@ -28,6 +32,7 @@ type CourseStatus = '진행중' | '완료' | '종료';
 interface Course {
   id: number;
   name: string;
+  description: string;
   status: CourseStatus;
   startDate: string;
   endDate: string;
@@ -37,11 +42,19 @@ interface Course {
 
 interface CourseForm {
   name: string;
+  description: string;
+  status: CourseStatus;
   startDate: string;
   endDate: string;
 }
 
-const EMPTY_FORM: CourseForm = { name: '', startDate: '', endDate: '' };
+const EMPTY_FORM: CourseForm = { name: '', description: '', status: '진행중', startDate: '', endDate: '' };
+
+const STATUS_OPTIONS: { value: CourseStatus; label: string; color: string }[] = [
+  { value: '진행중', label: '진행중', color: '#0064dd' },
+  { value: '완료',   label: '완료',   color: '#2e7d32' },
+  { value: '종료',   label: '종료',   color: '#888888' },
+];
 
 
 // ─── Course Form Dialog ───────────────────────────────────────────────────────
@@ -91,6 +104,38 @@ function CourseFormDialog({
           />
         </FormField>
 
+        <FormField label="설명" htmlFor="course-desc">
+          <TextField
+            id="course-desc"
+            size="small"
+            fullWidth
+            multiline
+            minRows={2}
+            maxRows={4}
+            placeholder="과정에 대한 설명을 입력해주세요"
+            value={form.description}
+            onChange={(e) => set('description', e.target.value)}
+          />
+        </FormField>
+
+        {mode === 'edit' && (
+          <FormField label="상태">
+            <Select
+              size="small"
+              fullWidth
+              value={form.status}
+              onChange={(e: SelectChangeEvent<string>) => set('status', e.target.value)}
+              sx={{ fontSize: 14 }}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value} sx={{ fontSize: 14 }}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormField>
+        )}
+
         <FormField label="기간" required>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <TextField
@@ -125,13 +170,15 @@ function CourseFormDialog({
 
 interface CourseCardProps {
   course: Course;
+  onClick: (course: Course) => void;
   onEdit: (course: Course) => void;
   onDelete: (course: Course) => void;
 }
 
-function CourseCard({ course, onEdit, onDelete }: CourseCardProps) {
+function CourseCard({ course, onClick, onEdit, onDelete }: CourseCardProps) {
   return (
     <Box
+      onClick={() => onClick(course)}
       sx={{
         bgcolor: '#ffffff',
         border: '1px solid #e0e0e0',
@@ -141,6 +188,12 @@ function CourseCard({ course, onEdit, onDelete }: CourseCardProps) {
         display: 'flex',
         flexDirection: 'column',
         gap: 1.5,
+        cursor: 'pointer',
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+        '&:hover': {
+          borderColor: '#0064dd',
+          boxShadow: '0 2px 8px rgba(0, 100, 221, 0.08)',
+        },
       }}
     >
       {/* Title + status */}
@@ -155,6 +208,13 @@ function CourseCard({ course, onEdit, onDelete }: CourseCardProps) {
       <Typography sx={{ fontSize: 13, color: '#888888' }}>
         {course.startDate} ~ {course.endDate}
       </Typography>
+
+      {/* Description */}
+      {course.description && (
+        <Typography sx={{ fontSize: 13, color: '#666666', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+          {course.description}
+        </Typography>
+      )}
 
       {/* Stats */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, flexGrow: 1 }}>
@@ -183,7 +243,7 @@ function CourseCard({ course, onEdit, onDelete }: CourseCardProps) {
         <Link
           component="button"
           underline="hover"
-          onClick={() => onEdit(course)}
+          onClick={(e) => { e.stopPropagation(); onEdit(course); }}
           sx={{ fontSize: 13, color: '#0064dd', background: 'none', border: 'none', cursor: 'pointer', p: 0 }}
         >
           수정
@@ -191,7 +251,7 @@ function CourseCard({ course, onEdit, onDelete }: CourseCardProps) {
         <Link
           component="button"
           underline="hover"
-          onClick={() => onDelete(course)}
+          onClick={(e) => { e.stopPropagation(); onDelete(course); }}
           sx={{ fontSize: 13, color: '#cc3333', background: 'none', border: 'none', cursor: 'pointer', p: 0 }}
         >
           삭제
@@ -204,6 +264,7 @@ function CourseCard({ course, onEdit, onDelete }: CourseCardProps) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function CourseManagement() {
+  const navigate = useNavigate();
   const [courses, setCourses]       = useState<Course[]>([]);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -215,6 +276,7 @@ export default function CourseManagement() {
           (c: Record<string, unknown>) => ({
             id:             Number(c.courseId ?? c.id),
             name:           String(c.name ?? ''),
+            description:    String(c.description ?? ''),
             status:         (c.status ?? '진행중') as CourseStatus,
             startDate:      String(c.startDate ?? ''),
             endDate:        String(c.endDate   ?? ''),
@@ -248,6 +310,7 @@ export default function CourseManagement() {
     const newCourse: Course = {
       id: Date.now(),
       name: form.name.trim(),
+      description: form.description.trim(),
       status: '진행중',
       startDate: form.startDate.trim(),
       endDate: form.endDate.trim(),
@@ -257,7 +320,7 @@ export default function CourseManagement() {
     setCourses((prev) => [newCourse, ...prev]);
     setCreateOpen(false);
     setFormError('');
-    createCourseApi(form).catch(() => {});
+    createCourseApi({ name: form.name.trim(), startDate: form.startDate.trim(), endDate: form.endDate.trim(), description: form.description.trim() || undefined }).catch(() => {});
   }
 
   function handleEdit(form: CourseForm) {
@@ -268,20 +331,40 @@ export default function CourseManagement() {
     setCourses((prev) =>
       prev.map((c) =>
         c.id === editCourse.id
-          ? { ...c, name: form.name.trim(), startDate: form.startDate.trim(), endDate: form.endDate.trim() }
+          ? { ...c, name: form.name.trim(), description: form.description.trim(), status: form.status, startDate: form.startDate.trim(), endDate: form.endDate.trim() }
           : c,
       ),
     );
     setEditCourse(null);
     setFormError('');
-    updateCourseApi(editCourse.id, form).catch(() => {});
+    updateCourseApi(editCourse.id, {
+      name: form.name.trim(),
+      description: form.description.trim(),
+      status: form.status,
+      startDate: form.startDate.trim(),
+      endDate: form.endDate.trim(),
+    }).catch(() => {});
   }
 
-  function handleDeleteConfirm() {
+  async function handleDeleteConfirm() {
     if (!deleteCourse) return;
-    setCourses((prev) => prev.filter((c) => c.id !== deleteCourse.id));
+    if (deleteCourse.totalUsers > 0) {
+      alert(`등록된 사용자가 ${deleteCourse.totalUsers}명 있어 삭제할 수 없습니다.\n사용자 관리에서 해당 과정의 사용자를 먼저 삭제해주세요.`);
+      setDeleteCourse(null);
+      return;
+    }
+    try {
+      await deleteCourseApi(deleteCourse.id);
+      setCourses((prev) => prev.filter((c) => c.id !== deleteCourse.id));
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        alert('등록된 사용자가 있어 삭제할 수 없습니다.\n사용자 관리에서 해당 과정의 사용자를 먼저 삭제해주세요.');
+      } else {
+        alert('과정 삭제 중 오류가 발생했습니다.');
+      }
+    }
     setDeleteCourse(null);
-    deleteCourseApi(deleteCourse.id).catch(() => {});
   }
 
   function openCreate() {
@@ -326,6 +409,7 @@ export default function CourseManagement() {
           <CourseCard
             key={course.id}
             course={course}
+            onClick={(c) => navigate(`/admin/courses/${c.id}/reports`)}
             onEdit={openEdit}
             onDelete={setDeleteCourse}
           />
@@ -348,7 +432,7 @@ export default function CourseManagement() {
         mode="edit"
         initialValues={
           editCourse
-            ? { name: editCourse.name, startDate: editCourse.startDate, endDate: editCourse.endDate }
+            ? { name: editCourse.name, description: editCourse.description, status: editCourse.status, startDate: editCourse.startDate, endDate: editCourse.endDate }
             : EMPTY_FORM
         }
         error={formError}
@@ -367,10 +451,16 @@ export default function CourseManagement() {
       >
         <Typography sx={{ fontSize: 14, color: '#444444' }}>
           <strong>{deleteCourse?.name}</strong> 과정을 삭제하시겠습니까?
-          <br />
-          <Typography component="span" sx={{ fontSize: 13, color: '#cc3333', mt: 0.5, display: 'block' }}>
-            삭제 시 관련 독후감 데이터도 함께 삭제됩니다.
-          </Typography>
+          {deleteCourse && deleteCourse.totalUsers > 0 ? (
+            <Typography component="span" sx={{ fontSize: 13, color: '#cc3333', mt: 0.5, display: 'block' }}>
+              등록된 사용자가 {deleteCourse.totalUsers}명 있어 삭제할 수 없습니다.
+              <br />사용자 관리에서 해당 과정의 사용자를 먼저 삭제해주세요.
+            </Typography>
+          ) : (
+            <Typography component="span" sx={{ fontSize: 13, color: '#cc3333', mt: 0.5, display: 'block' }}>
+              삭제 시 관련 데이터도 함께 삭제됩니다.
+            </Typography>
+          )}
         </Typography>
       </ConfirmModal>
     </Box>

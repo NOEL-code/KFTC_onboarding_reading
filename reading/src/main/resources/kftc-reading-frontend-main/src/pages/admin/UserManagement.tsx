@@ -1,28 +1,31 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   Link,
+  MenuItem,
+  Select,
   TextField,
   Typography,
   Pagination,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
-import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import * as XLSX from 'xlsx';
 import {
   fetchUsersByCourse,
   createUsers,
   updateUsers,
   deleteUsers,
-  uploadUsersExcel,
 } from '../../api/userApi.ts';
 import DataTable from '../../components/DataTable.tsx';
 import type { Column } from '../../components/DataTable.tsx';
 import ConfirmModal from '../../components/ConfirmModal.tsx';
 import FileDropzone from '../../components/FileDropzone.tsx';
-import FormDialog from '../../components/FormDialog.tsx';
-import FormField from '../../components/FormField.tsx';
 import PageHeader from '../../components/PageHeader.tsx';
 import { useCourse } from '../../context/CourseContext.tsx';
 
@@ -32,7 +35,7 @@ interface User {
   id: number;
   employeeNo: string;
   name: string;
-  dept: string;  // UI label: 소속명/부서 / API field: team
+  dept: string;
 }
 
 type UserForm = Omit<User, 'id'>;
@@ -41,89 +44,87 @@ const EMPTY_FORM: UserForm = { employeeNo: '', name: '', dept: '' };
 
 const PAGE_SIZE = 10;
 
-// ─── Field config for the user form ──────────────────────────────────────────
-
-const FORM_FIELDS: { key: keyof UserForm; label: string; placeholder: string; type?: string }[] = [
-  { key: 'employeeNo', label: '사번', placeholder: '사번을 입력해주세요' },
-  { key: 'name',       label: '이름', placeholder: '이름을 입력해주세요' },
-  { key: 'dept',       label: '팀', placeholder: '팀명을 입력해주세요' },
-];
-
-// ─── User form dialog (add / edit) ───────────────────────────────────────────
-
-interface UserFormDialogProps {
-  open: boolean;
-  initialValues: UserForm;
-  mode: 'add' | 'edit';
-  onClose: () => void;
-  onSubmit: (values: UserForm) => void;
+// Locally-added users get negative IDs to distinguish from server IDs
+let localIdCounter = -1;
+function nextLocalId() {
+  return localIdCounter--;
 }
 
-function UserFormDialog({ open, initialValues, mode, onClose, onSubmit }: UserFormDialogProps) {
-  const [form, setForm] = useState<UserForm>(initialValues);
+// ─── Excel parsing helper ────────────────────────────────────────────────────
 
-  function handleChange(key: keyof UserForm, value: string) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+const HEADER_MAP: Record<string, keyof UserForm> = {
+  '사번': 'employeeNo',
+  'employeeno': 'employeeNo',
+  '이름': 'name',
+  'name': 'name',
+  '팀': 'dept',
+  '부서': 'dept',
+  '소속': 'dept',
+  'team': 'dept',
+  'dept': 'dept',
+};
+
+function parseExcelToUsers(buffer: ArrayBuffer): UserForm[] {
+  const wb = XLSX.read(buffer, { type: 'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const json: Record<string, unknown>[] = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+  if (json.length === 0) return [];
+
+  // Map header names to our field keys
+  const rawHeaders = Object.keys(json[0]);
+  const headerMapping: Record<string, keyof UserForm> = {};
+  for (const h of rawHeaders) {
+    const mapped = HEADER_MAP[h.trim().toLowerCase()];
+    if (mapped) headerMapping[h] = mapped;
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    onSubmit(form);
-  }
-
-  return (
-    <FormDialog
-      open={open}
-      title={mode === 'add' ? '사용자 추가' : '사용자 수정'}
-      confirmLabel={mode === 'add' ? '추가' : '저장'}
-      formId="user-form"
-      onClose={onClose}
-      onEnter={() => setForm(initialValues)}
-    >
-      <Box
-        component="form"
-        id="user-form"
-        onSubmit={handleSubmit}
-        sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-      >
-        {FORM_FIELDS.map(({ key, label, placeholder, type }) => (
-          <FormField key={key} label={label} htmlFor={`user-field-${key}`}>
-            <TextField
-              id={`user-field-${key}`}
-              size="small"
-              fullWidth
-              type={type ?? 'text'}
-              placeholder={placeholder}
-              value={form[key]}
-              onChange={(e) => handleChange(key, e.target.value)}
-              required
-            />
-          </FormField>
-        ))}
-      </Box>
-    </FormDialog>
-  );
+  return json.map((row) => {
+    const user: UserForm = { employeeNo: '', name: '', dept: '' };
+    for (const [raw, key] of Object.entries(headerMapping)) {
+      user[key] = String(row[raw] ?? '').trim();
+    }
+    return user;
+  }).filter((u) => u.employeeNo !== '');
 }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function UserManagement() {
-  const { selectedCourseId } = useCourse();
+  const { courses, selectedCourseId, setSelectedCourseId } = useCourse();
+
+  // savedRows: the last-known server state (snapshot after load / save)
+  const savedRowsRef = useRef<User[]>([]);
   const [rows, setRows]               = useState<User[]>([]);
   const [selected, setSelected]       = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage]               = useState(1);
   const [excelFile, setExcelFile]     = useState<File | null>(null);
-  const excelUploadingRef             = useRef(false);
+  const [saving, setSaving]           = useState(false);
+  const [excelError, setExcelError]   = useState('');
 
-  const [addOpen, setAddOpen]               = useState(false);
+  const [addingRow, setAddingRow]           = useState<UserForm | null>(null);
   const [editUser, setEditUser]             = useState<User | null>(null);
+  const [editForm, setEditForm]             = useState<UserForm>(EMPTY_FORM);
   const [deleteUser, setDeleteUser]         = useState<User | null>(null);
   const [deleteBulkOpen, setDeleteBulkOpen] = useState(false);
 
+  // ── Course change handler ──────────────────────────────────────────────────
+
+  function handleCourseChange(e: SelectChangeEvent<string>) {
+    setSelectedCourseId(e.target.value);
+    savedRowsRef.current = [];
+    setRows([]);
+    setSelected(new Set());
+    setSearchQuery('');
+    setPage(1);
+    setExcelFile(null);
+    setExcelError('');
+  }
+
   // ── Load users from API ─────────────────────────────────────────────────────
 
-  useEffect(() => {
+  const loadUsers = useCallback(() => {
     if (!selectedCourseId) return;
     fetchUsersByCourse(selectedCourseId)
       .then(({ data }) => {
@@ -136,11 +137,14 @@ export default function UserManagement() {
             dept:       String(u.team ?? ''),
           })
         );
+        savedRowsRef.current = list;
         setRows(list);
         setSelected(new Set());
       })
       .catch(() => {});
   }, [selectedCourseId]);
+
+  useEffect(() => { loadUsers(); }, [loadUsers]);
 
   // ── Derived state ──────────────────────────────────────────────────────────
 
@@ -157,6 +161,26 @@ export default function UserManagement() {
 
   const allSelected  = pageRows.length > 0 && pageRows.every((r) => selected.has(r.id));
   const someSelected = pageRows.some((r) => selected.has(r.id)) && !allSelected;
+
+  // ── Change detection ──────────────────────────────────────────────────────
+
+  const hasChanges = useMemo(() => {
+    const saved = savedRowsRef.current;
+    if (rows.length !== saved.length) return true;
+    const savedMap = new Map(saved.map((u) => [u.id, u]));
+    for (const r of rows) {
+      if (r.id < 0) return true; // new user
+      const s = savedMap.get(r.id);
+      if (!s) return true; // deleted & re-added? shouldn't happen, but counts
+      if (s.name !== r.name || s.dept !== r.dept || s.employeeNo !== r.employeeNo) return true;
+    }
+    // Check if any saved user was removed
+    const currentIds = new Set(rows.map((r) => r.id));
+    for (const s of saved) {
+      if (!currentIds.has(s.id)) return true;
+    }
+    return false;
+  }, [rows]);
 
   // ── Selection ──────────────────────────────────────────────────────────────
 
@@ -178,22 +202,24 @@ export default function UserManagement() {
     });
   }
 
-  // ── CRUD ───────────────────────────────────────────────────────────────────
+  // ── Local CRUD (no API calls) ─────────────────────────────────────────────
 
-  function handleAdd(form: UserForm) {
-    const newUser: User = { id: Date.now(), ...form };
-    setRows((prev) => [newUser, ...prev]);
-    setAddOpen(false);
-    createUsers([{ courseId: Number(selectedCourseId), employeeNo: form.employeeNo, name: form.name, team: form.dept }])
-      .catch(() => {});
+  function handleAddConfirm() {
+    if (!addingRow || !addingRow.employeeNo.trim()) return;
+    const newUser: User = { id: nextLocalId(), ...addingRow };
+    setRows((prev) => [...prev, newUser]);
+    setAddingRow(null);
   }
 
-  function handleEdit(form: UserForm) {
+  function startEdit(row: User) {
+    setEditUser(row);
+    setEditForm({ employeeNo: row.employeeNo, name: row.name, dept: row.dept });
+  }
+
+  function handleEditConfirm() {
     if (!editUser) return;
-    setRows((prev) => prev.map((r) => (r.id === editUser.id ? { ...r, ...form } : r)));
+    setRows((prev) => prev.map((r) => (r.id === editUser.id ? { ...r, ...editForm } : r)));
     setEditUser(null);
-    updateUsers(Number(selectedCourseId), [{ userId: editUser.id, name: form.name, team: form.dept }])
-      .catch(() => {});
   }
 
   function handleDeleteConfirm() {
@@ -201,45 +227,108 @@ export default function UserManagement() {
     setRows((prev) => prev.filter((r) => r.id !== deleteUser.id));
     setSelected((prev) => { const n = new Set(prev); n.delete(deleteUser.id); return n; });
     setDeleteUser(null);
-    deleteUsers(Number(selectedCourseId), [deleteUser.id])
-      .catch(() => {});
   }
 
   function handleBulkDeleteConfirm() {
-    const idsToDelete = [...selected];
     setRows((prev) => prev.filter((r) => !selected.has(r.id)));
     setSelected(new Set());
     setDeleteBulkOpen(false);
-    deleteUsers(Number(selectedCourseId), idsToDelete)
-      .catch(() => {});
   }
 
-  // ── Excel upload ────────────────────────────────────────────────────────────
+  // ── Excel parsing (local only) ────────────────────────────────────────────
 
   useEffect(() => {
-    if (!excelFile || excelUploadingRef.current || !selectedCourseId) return;
-    excelUploadingRef.current = true;
-    uploadUsersExcel(selectedCourseId, excelFile)
-      .then(() => fetchUsersByCourse(selectedCourseId))
-      .then(({ data }) => {
-        const raw = data.users ?? data.content ?? (Array.isArray(data) ? data : []);
-        const list: User[] = raw.map(
-          (u: Record<string, unknown>) => ({
-            id:         Number(u.userId ?? u.id),
-            employeeNo: String(u.employeeNo ?? ''),
-            name:       String(u.name ?? ''),
-            dept:       String(u.team ?? ''),
-          })
-        );
-        setRows(list);
-      })
-      .catch(() => {})
-      .finally(() => {
-        excelUploadingRef.current = false;
-        setExcelFile(null);
-      });
+    if (!excelFile) return;
+    setExcelError('');
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const buffer = e.target?.result as ArrayBuffer;
+        const parsed = parseExcelToUsers(buffer);
+        if (parsed.length === 0) {
+          setExcelError('엑셀 파일에서 사용자 데이터를 찾을 수 없습니다. 필수 열: 사번, 이름, 팀');
+          return;
+        }
+        // Deduplicate by employeeNo against existing rows
+        const existingNos = new Set(rows.map((r) => r.employeeNo));
+        const newUsers: User[] = parsed
+          .filter((u) => !existingNos.has(u.employeeNo))
+          .map((u) => ({ id: nextLocalId(), ...u }));
+
+        if (newUsers.length === 0) {
+          setExcelError('엑셀의 모든 사용자가 이미 목록에 존재합니다.');
+          return;
+        }
+
+        setRows((prev) => [...prev, ...newUsers]);
+      } catch {
+        setExcelError('엑셀 파일을 읽는 중 오류가 발생했습니다.');
+      }
+    };
+    reader.readAsArrayBuffer(excelFile);
+    setExcelFile(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [excelFile]);
+
+  // ── Save all changes to backend ───────────────────────────────────────────
+
+  async function handleSaveAll() {
+    if (!selectedCourseId || !hasChanges) return;
+    setSaving(true);
+
+    const saved = savedRowsRef.current;
+    const savedMap = new Map(saved.map((u) => [u.id, u]));
+    const currentIds = new Set(rows.map((r) => r.id));
+    const courseId = Number(selectedCourseId);
+
+    // 1. New users (negative IDs)
+    const newUsers = rows.filter((r) => r.id < 0);
+    // 2. Modified users (positive IDs with changed data)
+    const modifiedUsers = rows.filter((r) => {
+      if (r.id < 0) return false;
+      const s = savedMap.get(r.id);
+      if (!s) return false;
+      return s.name !== r.name || s.dept !== r.dept;
+    });
+    // 3. Deleted users (saved IDs not in current rows)
+    const deletedIds = saved.filter((s) => !currentIds.has(s.id)).map((s) => s.id);
+
+    try {
+      const promises: Promise<unknown>[] = [];
+
+      if (newUsers.length > 0) {
+        promises.push(
+          createUsers(newUsers.map((u) => ({
+            courseId,
+            employeeNo: u.employeeNo,
+            name: u.name,
+            team: u.dept,
+          })))
+        );
+      }
+      if (modifiedUsers.length > 0) {
+        promises.push(
+          updateUsers(courseId, modifiedUsers.map((u) => ({
+            userId: u.id,
+            name: u.name,
+            team: u.dept,
+          })))
+        );
+      }
+      if (deletedIds.length > 0) {
+        promises.push(deleteUsers(courseId, deletedIds));
+      }
+
+      await Promise.all(promises);
+      // Reload from server to get real IDs
+      loadUsers();
+    } catch {
+      // Error handling — keep current state
+    } finally {
+      setSaving(false);
+    }
+  }
 
   // ── Columns ────────────────────────────────────────────────────────────────
 
@@ -266,52 +355,112 @@ export default function UserManagement() {
         />
       ),
     },
-    { id: 'employeeNo', label: '사번',   width: 100 },
-    { id: 'name',       label: '이름',   width: 90  },
-    { id: 'dept',       label: '소속명'             },
+    {
+      id: 'employeeNo', label: '사번', width: 120,
+      render: (_val, row) =>
+        editUser?.id === row.id ? (
+          <TextField size="small" value={editForm.employeeNo} onChange={(e) => setEditForm((f) => ({ ...f, employeeNo: e.target.value }))} sx={{ '& input': { fontSize: 13, py: 0.5 } }} />
+        ) : (String(_val ?? '')),
+    },
+    {
+      id: 'name', label: '이름', width: 100,
+      render: (_val, row) =>
+        editUser?.id === row.id ? (
+          <TextField size="small" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} sx={{ '& input': { fontSize: 13, py: 0.5 } }} />
+        ) : (String(_val ?? '')),
+    },
+    {
+      id: 'dept', label: '팀명', width: 120,
+      render: (_val, row) =>
+        editUser?.id === row.id ? (
+          <TextField size="small" value={editForm.dept} onChange={(e) => setEditForm((f) => ({ ...f, dept: e.target.value }))} sx={{ '& input': { fontSize: 13, py: 0.5 } }} />
+        ) : (String(_val ?? '')),
+    },
     {
       id: '_actions',
       label: '작업',
-      width: 100,
+      width: 140,
       align: 'center',
-      render: (_val, row) => (
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5 }}>
-          <Link
-            component="button"
-            underline="hover"
-            onClick={() => setEditUser(row)}
-            sx={{ fontSize: 13, color: '#0064dd', cursor: 'pointer', background: 'none', border: 'none' }}
-          >
-            수정
-          </Link>
-          <Link
-            component="button"
-            underline="hover"
-            onClick={() => setDeleteUser(row)}
-            sx={{ fontSize: 13, color: '#cc3333', cursor: 'pointer', background: 'none', border: 'none' }}
-          >
-            삭제
-          </Link>
-        </Box>
-      ),
+      render: (_val, row) =>
+        editUser?.id === row.id ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5 }}>
+            <Link component="button" underline="hover" onClick={handleEditConfirm} sx={{ fontSize: 13, color: '#2e7d32', cursor: 'pointer', background: 'none', border: 'none' }}>저장</Link>
+            <Link component="button" underline="hover" onClick={() => setEditUser(null)} sx={{ fontSize: 13, color: '#888888', cursor: 'pointer', background: 'none', border: 'none' }}>취소</Link>
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5 }}>
+            <Link component="button" underline="hover" onClick={() => startEdit(row)} sx={{ fontSize: 13, color: '#0064dd', cursor: 'pointer', background: 'none', border: 'none' }}>수정</Link>
+            <Link component="button" underline="hover" onClick={() => setDeleteUser(row)} sx={{ fontSize: 13, color: '#cc3333', cursor: 'pointer', background: 'none', border: 'none' }}>삭제</Link>
+          </Box>
+        ),
     },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [pageRows, selected, allSelected, someSelected, page]);
+  ], [pageRows, selected, allSelected, someSelected, page, editUser, editForm]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <Box>
+    <Box sx={{ maxWidth: 760, mx: 'auto' }}>
       <PageHeader title="사용자 관리">
-        <Button
-          variant="contained"
-          startIcon={<PersonAddOutlinedIcon />}
-          onClick={() => setAddOpen(true)}
-          sx={{ height: 40, bgcolor: '#0064dd', '&:hover': { bgcolor: '#004ca8' } }}
-        >
-          + 사용자 추가
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          <Select
+            size="small"
+            value={selectedCourseId}
+            onChange={handleCourseChange}
+            displayEmpty
+            renderValue={(val) => {
+              if (!val) return <Typography component="span" sx={{ fontSize: 14, color: '#999999' }}>과정을 선택해주세요</Typography>;
+              const c = courses.find((course) => String(course.id) === val);
+              return c?.name ?? val;
+            }}
+            sx={{ minWidth: 200, bgcolor: '#ffffff', fontSize: 14 }}
+          >
+            {courses.map((c) => (
+              <MenuItem key={c.id} value={String(c.id)} sx={{ fontSize: 14 }}>
+                {c.name}
+              </MenuItem>
+            ))}
+          </Select>
+          <Button
+            variant="contained"
+            startIcon={saving ? <CircularProgress size={16} sx={{ color: '#fff' }} /> : <SaveOutlinedIcon />}
+            disabled={!hasChanges || saving}
+            onClick={handleSaveAll}
+            sx={{
+              height: 40,
+              bgcolor: '#2e7d32',
+              '&:hover': { bgcolor: '#1b5e20' },
+              '&:disabled': { bgcolor: '#a5d6a7' },
+            }}
+          >
+            등록
+          </Button>
+        </Box>
       </PageHeader>
+
+      {/* Empty state — no course selected */}
+      {!selectedCourseId ? (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            py: 10,
+            bgcolor: '#ffffff',
+            borderRadius: '8px',
+            border: '1px solid #e8e8e8',
+          }}
+        >
+          <Typography sx={{ fontSize: 16, fontWeight: 600, color: '#888888', mb: 1 }}>
+            과정을 선택해주세요
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: '#aaaaaa' }}>
+            사용자를 관리할 독서 과정을 위 드롭다운에서 선택하세요.
+          </Typography>
+        </Box>
+      ) : (
+      <>
 
       {/* Excel upload zone */}
       <Box sx={{ mb: 3 }}>
@@ -326,13 +475,25 @@ export default function UserManagement() {
           mainText="엑셀 파일을 드래그하거나 클릭하여 업로드"
           subText=".xlsx, .xls | 최대 500명 | 필수 열: 사번, 이름, 팀"
         />
+        {excelError && (
+          <Typography sx={{ fontSize: 13, color: '#cc3333', mt: 1 }}>
+            {excelError}
+          </Typography>
+        )}
       </Box>
 
       {/* User count + actions */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-        <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#222222' }}>
-          전체 {rows.length}명
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#222222' }}>
+            전체 {rows.length}명
+          </Typography>
+          {hasChanges && (
+            <Typography sx={{ fontSize: 12, color: '#c4317b', fontWeight: 500 }}>
+              미저장 변경사항 있음
+            </Typography>
+          )}
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Button
             variant="outlined"
@@ -376,17 +537,38 @@ export default function UserManagement() {
           onPageChange={setPage}
         />
 
-        {/* Footer row */}
+        {/* Inline add row */}
+        {addingRow && (
+          <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1, gap: 1.5, borderTop: '1px solid #eeeeee', bgcolor: '#f9fbff' }}>
+            <Box sx={{ width: 48 }} />
+            <TextField size="small" placeholder="사번" value={addingRow.employeeNo} onChange={(e) => setAddingRow((f) => f && ({ ...f, employeeNo: e.target.value }))} sx={{ width: 120, '& input': { fontSize: 13, py: 0.5 } }} />
+            <TextField size="small" placeholder="이름" value={addingRow.name} onChange={(e) => setAddingRow((f) => f && ({ ...f, name: e.target.value }))} sx={{ width: 100, '& input': { fontSize: 13, py: 0.5 } }} />
+            <TextField size="small" placeholder="팀명" value={addingRow.dept} onChange={(e) => setAddingRow((f) => f && ({ ...f, dept: e.target.value }))} sx={{ width: 120, '& input': { fontSize: 13, py: 0.5 } }} />
+            <Link component="button" underline="hover" onClick={handleAddConfirm} sx={{ fontSize: 13, color: '#2e7d32', cursor: 'pointer', background: 'none', border: 'none', flexShrink: 0 }}>확인</Link>
+            <Link component="button" underline="hover" onClick={() => setAddingRow(null)} sx={{ fontSize: 13, color: '#888888', cursor: 'pointer', background: 'none', border: 'none', flexShrink: 0 }}>취소</Link>
+          </Box>
+        )}
+
+        {/* Add button + footer */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             px: 2,
             py: 1.5,
             borderTop: '1px solid #eeeeee',
           }}
         >
+          <Button
+            size="small"
+            startIcon={<AddIcon />}
+            disabled={!!addingRow}
+            onClick={() => setAddingRow({ ...EMPTY_FORM })}
+            sx={{ fontSize: 13, color: '#0064dd', textTransform: 'none' }}
+          >
+            추가
+          </Button>
           <Pagination
             count={totalPages}
             page={page}
@@ -398,27 +580,8 @@ export default function UserManagement() {
         </Box>
       </Box>
 
-      {/* Add user dialog */}
-      <UserFormDialog
-        open={addOpen}
-        mode="add"
-        initialValues={EMPTY_FORM}
-        onClose={() => setAddOpen(false)}
-        onSubmit={handleAdd}
-      />
-
-      {/* Edit user dialog */}
-      <UserFormDialog
-        open={!!editUser}
-        mode="edit"
-        initialValues={
-          editUser
-            ? { employeeNo: editUser.employeeNo, name: editUser.name, dept: editUser.dept }
-            : EMPTY_FORM
-        }
-        onClose={() => setEditUser(null)}
-        onSubmit={handleEdit}
-      />
+      </>
+      )}
 
       {/* Single-row delete confirm */}
       <ConfirmModal
@@ -430,11 +593,7 @@ export default function UserManagement() {
         onCancel={() => setDeleteUser(null)}
       >
         <Typography sx={{ fontSize: 14, color: '#444444' }}>
-          <strong>{deleteUser?.name}</strong> ({deleteUser?.dept}) 사용자를 삭제하시겠습니까?
-          <br />
-          <Typography component="span" sx={{ fontSize: 13, color: '#cc3333', mt: 0.5, display: 'block' }}>
-            이 작업은 되돌릴 수 없습니다.
-          </Typography>
+          <strong>{deleteUser?.name}</strong> ({deleteUser?.dept}) 사용자를 목록에서 삭제하시겠습니까?
         </Typography>
       </ConfirmModal>
 
@@ -448,11 +607,7 @@ export default function UserManagement() {
         onCancel={() => setDeleteBulkOpen(false)}
       >
         <Typography sx={{ fontSize: 14, color: '#444444' }}>
-          선택한 <strong>{selected.size}명</strong>의 사용자를 삭제하시겠습니까?
-          <br />
-          <Typography component="span" sx={{ fontSize: 13, color: '#cc3333', mt: 0.5, display: 'block' }}>
-            이 작업은 되돌릴 수 없습니다.
-          </Typography>
+          선택한 <strong>{selected.size}명</strong>의 사용자를 목록에서 삭제하시겠습니까?
         </Typography>
       </ConfirmModal>
     </Box>

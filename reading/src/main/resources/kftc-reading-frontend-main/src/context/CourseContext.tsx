@@ -33,6 +33,12 @@ export function CourseProvider({ children }: { children: React.ReactNode }) {
           endDate:   c.endDate ? String(c.endDate) : undefined,
         }));
         if (list.length > 0) {
+          list.sort((a, b) => {
+            const aEnded = a.status === '종료' ? 1 : 0;
+            const bEnded = b.status === '종료' ? 1 : 0;
+            if (aEnded !== bEnded) return aEnded - bEnded;
+            return (b.startDate ?? '').localeCompare(a.startDate ?? '');
+          });
           setCourses(list);
         }
       })

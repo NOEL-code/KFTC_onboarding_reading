@@ -108,7 +108,7 @@ export default function TemplateManagement() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', maxWidth: 640, mx: 'auto', width: '100%' }}>
       <PageHeader title="독후감 양식 관리" />
 
       {/* Info banner */}
@@ -189,7 +189,7 @@ export default function TemplateManagement() {
           <input
             ref={uploadInputRef}
             type="file"
-            accept=".hwp"
+            accept=".hwp,.hwpx"
             style={{ display: 'none' }}
             onChange={handleUpload}
           />

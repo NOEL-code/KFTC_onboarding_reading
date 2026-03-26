@@ -8,7 +8,9 @@ import {
   Link,
   Pagination,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   fetchAdminReports,
   approveReports,
@@ -19,9 +21,7 @@ import DataTable from '../../components/DataTable.tsx';
 import type { Column } from '../../components/DataTable.tsx';
 import StatusBadge from '../../components/StatusBadge.tsx';
 import ConfirmModal from '../../components/ConfirmModal.tsx';
-import PageHeader from '../../components/PageHeader.tsx';
 import { downloadFile } from '../../utils/downloadFile.ts';
-import { useCourse } from '../../context/CourseContext.tsx';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,7 +70,8 @@ function filterOptionToStatus(opt: StatusFilterOption): ReportStatus | null {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ReportManagement() {
-  const { selectedCourseId } = useCourse();
+  const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
 
   const [rows, setRows]               = useState<Report[]>([]);
   const [page, setPage]               = useState(1);
@@ -97,7 +98,7 @@ export default function ReportManagement() {
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!selectedCourseId) return;
+    if (!courseId) return;
     let cancelled = false;
 
     async function fetchReports() {
@@ -105,7 +106,7 @@ export default function ReportManagement() {
 
       try {
         const { data } = await fetchAdminReports({
-          courseId: selectedCourseId,
+          courseId,
           page,
           status: statusParam ?? undefined,
           name:   searchQuery || undefined,
@@ -142,7 +143,7 @@ export default function ReportManagement() {
 
     fetchReports();
     return () => { cancelled = true; };
-  }, [selectedCourseId, page, statusFilter, searchQuery]);
+  }, [courseId, page, statusFilter, searchQuery]);
 
   // ── Client-side filtering ──────────────────────────────────────────────────
 
@@ -270,7 +271,7 @@ export default function ReportManagement() {
     },
     { id: 'employeeNo', label: '사번', width: 90 },
     { id: 'name',       label: '이름', width: 90 },
-    { id: 'dept', label: '소속명', width: 110 },
+    { id: 'dept', label: '팀명', width: 100 },
     {
       id: 'title',
       label: '파일명',
@@ -302,7 +303,7 @@ export default function ReportManagement() {
       width: 100,
       align: 'center',
       render: (_val, row) =>
-        row.status === '제출' || row.status === '보완' ? (
+        row.status === '제출' ? (
           <Link
             component="button"
             underline="hover"
@@ -311,6 +312,8 @@ export default function ReportManagement() {
           >
             보완 요청
           </Link>
+        ) : row.status === '보완' ? (
+          <Typography sx={{ fontSize: 13, color: '#cccccc' }}>보완 요청됨</Typography>
         ) : (
           <Typography sx={{ fontSize: 13, color: '#cccccc' }}>—</Typography>
         ),
@@ -321,8 +324,18 @@ export default function ReportManagement() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <Box>
-      <PageHeader title="독후감 관리" />
+    <Box sx={{ maxWidth: 960, mx: 'auto' }}>
+      <Button
+        variant="text"
+        startIcon={<ArrowBackIcon />}
+        onClick={() => navigate('/admin/courses')}
+        sx={{ color: '#555555', fontSize: 14, minWidth: 0, px: 0.5, mb: 1 }}
+      >
+        과정 목록
+      </Button>
+      <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#222222', mb: 3 }}>
+        독후감 관리
+      </Typography>
 
       {/* Summary cards — act as filter tabs */}
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>

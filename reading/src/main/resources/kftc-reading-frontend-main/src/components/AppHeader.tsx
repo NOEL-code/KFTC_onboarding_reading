@@ -1,45 +1,10 @@
-import { Box, Button, MenuItem, Select, Typography } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material';
-import { useCourse } from '../context/CourseContext.tsx';
+import { Box, Button, Typography } from '@mui/material';
 
 type AppHeaderProps =
-  | { variant: 'user'; onLogoClick: () => void; onCourseSelect: (id: string) => void; }
+  | { variant: 'user'; onLogoClick: () => void; }
   | { variant: 'admin'; adminName?: string; onLogout: () => void; };
 
-function CourseDropdown({ onSelect }: { onSelect: (id: string) => void }) {
-  const { courses, selectedCourseId } = useCourse();
-
-  return (
-    <Select
-      size="small"
-      value={selectedCourseId}
-      onChange={(e: SelectChangeEvent<string>) => onSelect(e.target.value)}
-      displayEmpty
-      renderValue={(val) => {
-        if (!val) {
-          return (
-            <Typography component="span" sx={{ fontSize: 14, color: '#999999' }}>
-              독서과정 선택
-            </Typography>
-          );
-        }
-        const course = courses.find((c) => String(c.id) === val);
-        return course?.name ?? val;
-      }}
-      sx={{ fontSize: 14, minWidth: 160 }}
-    >
-      {courses.map((course) => (
-        <MenuItem key={course.id} value={String(course.id)} sx={{ fontSize: 14 }}>
-          {course.name}
-        </MenuItem>
-      ))}
-    </Select>
-  );
-}
-
 export default function AppHeader(props: AppHeaderProps) {
-  const { setSelectedCourseId } = useCourse();
-
   return (
     <Box
       sx={{
@@ -76,14 +41,11 @@ export default function AppHeader(props: AppHeaderProps) {
       </Box>
 
       {/* Right side */}
-      {props.variant === 'user' ? (
-        <CourseDropdown onSelect={props.onCourseSelect} />
-      ) : (
+      {props.variant === 'user' ? null : (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {props.adminName && (
             <Typography sx={{ fontSize: 14, color: '#444444' }}>{props.adminName}</Typography>
           )}
-          <CourseDropdown onSelect={setSelectedCourseId} />
           <Button
             variant="outlined"
             onClick={props.onLogout}

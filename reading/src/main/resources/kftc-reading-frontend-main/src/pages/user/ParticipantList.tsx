@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import {
   Box,
+  Button,
   Chip,
   Link,
   Pagination,
@@ -13,6 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchCourseDetail } from '../../api/courseApi.ts';
@@ -139,7 +141,7 @@ export default function ParticipantList() {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return participants;
     return participants.filter((p) =>
-      p.name.toLowerCase().includes(q) || p.dept.toLowerCase().includes(q),
+      p.name.toLowerCase().includes(q) || p.dept.toLowerCase().includes(q) || p.employeeNo.toLowerCase().includes(q),
     );
   }, [participants, searchQuery]);
 
@@ -148,11 +150,20 @@ export default function ParticipantList() {
 
   function handleAction(p: Participant) {
     const cfg = ACTION_CONFIG[p.status];
-    const state = { courseName: courseInfo.name, courseId, action: cfg.action };
+    const state = {
+      courseName: courseInfo.name,
+      courseId,
+      action: cfg.action,
+      employeeNo: p.employeeNo,
+      empName: p.name,
+      empDept: p.dept,
+      reportId: p.id || undefined,
+    };
     if (cfg.action === 'view') {
       navigate(`/view/${p.id}`, { state });
     } else {
-      navigate(`/submit/${p.id}`, { state });
+      // 미제출(reportId=0)이면 신규 제출, 그 외는 재제출
+      navigate(p.id ? `/submit/${p.id}` : '/submit/new', { state });
     }
   }
 
@@ -172,7 +183,16 @@ export default function ParticipantList() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+    <Box sx={{ maxWidth: 860, mx: 'auto' }}>
+      <Button
+        variant="text"
+        startIcon={<ArrowBackIcon />}
+        onClick={() => navigate('/')}
+        sx={{ color: '#555555', fontSize: 14, minWidth: 0, px: 0.5, mb: 1 }}
+      >
+        홈으로
+      </Button>
+
       {/* ── Page header ─────────────────────────────────────────────────── */}
       <Box
         sx={{
@@ -253,7 +273,7 @@ export default function ParticipantList() {
 
         <TextField
           size="small"
-          placeholder="이름, 소속 검색..."
+          placeholder="사번, 이름, 팀 검색..."
           value={searchQuery}
           onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
           sx={{ width: 220, bgcolor: '#ffffff' }}
@@ -276,7 +296,7 @@ export default function ParticipantList() {
                 {[
                   { label: '사번',   width: 90,        align: 'center' as const },
                   { label: '이름',   width: 120,       align: 'left'   as const },
-                  { label: '소속명', width: 140,       align: 'left'   as const },
+                  { label: '팀명', width: 120,       align: 'left'   as const },
                   { label: '파일명', width: undefined, align: 'left'   as const },
                   { label: '작업',   width: 130,       align: 'center' as const },
                   { label: '상태',   width: 110,       align: 'center' as const },
@@ -338,7 +358,7 @@ export default function ParticipantList() {
                         {p.name}
                       </TableCell>
 
-                      {/* 소속 */}
+                      {/* 팀명 */}
                       <TableCell
                         sx={{ fontSize: 13, color: '#444444', py: 1.5, borderBottom: '1px solid #eeeeee' }}
                       >
