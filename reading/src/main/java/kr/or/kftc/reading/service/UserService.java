@@ -1,5 +1,7 @@
 package kr.or.kftc.reading.service;
 
+import kr.or.kftc.reading.dto.UserBatchResponse;
+import kr.or.kftc.reading.dto.UserBatchResponse.BatchResultItem;
 import kr.or.kftc.reading.dto.UserCreateRequest;
 import kr.or.kftc.reading.dto.UserUpdateRequest;
 import kr.or.kftc.reading.entity.CourseEnrollment;
@@ -14,7 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,53 +29,109 @@ public class UserService {
     private final CourseEnrollmentRepository enrollmentRepository;
 
     @Transactional
-    public Map<String, Object> createUser(UserCreateRequest request) {
-        ReadingCourse course = courseRepository.findById(request.getCourseId())
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
+    public UserBatchResponse createUsers(List<UserCreateRequest> requests) {
+        List<BatchResultItem> results = new ArrayList<>();
+        int success = 0;
 
-        User user = userRepository.findByEmployeeNo(request.getEmployeeNo())
-                .orElseGet(() -> {
-                    User newUser = User.builder()
-                            .employeeNo(request.getEmployeeNo())
-                            .name(request.getName())
-                            .department(request.getDepartment())
-                            .email(request.getEmail())
-                            .phone(request.getPhone())
-                            .build();
-                    return userRepository.save(newUser);
-                });
+        for (int i = 0; i < requests.size(); i++) {
+            UserCreateRequest req = requests.get(i);
+            try {
+                ReadingCourse course = courseRepository.findById(req.getCourseId())
+                        .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
 
-        if (enrollmentRepository.existsByCourseIdAndUserId(course.getId(), user.getId())) {
-            throw new BusinessException(HttpStatus.CONFLICT, "이미 해당 과정에 등록된 사용자입니다.");
+                User user = userRepository.findByEmployeeNo(req.getEmployeeNo())
+                        .orElseGet(() -> userRepository.save(User.builder()
+                                .employeeNo(req.getEmployeeNo())
+                                .name(req.getName())
+                                .department(req.getDepartment())
+                                .email(req.getEmail())
+                                .phone(req.getPhone())
+                                .build()));
+
+                if (enrollmentRepository.existsByCourseIdAndUserId(course.getId(), user.getId())) {
+                    results.add(BatchResultItem.builder()
+                            .index(i).success(false).userId(user.getId())
+                            .message("이미 해당 과정에 등록된 사용자입니다.").build());
+                    continue;
+                }
+
+                enrollmentRepository.save(CourseEnrollment.builder().course(course).user(user).build());
+                results.add(BatchResultItem.builder()
+                        .index(i).success(true).userId(user.getId())
+                        .message("등록 성공").build());
+                success++;
+            } catch (Exception e) {
+                results.add(BatchResultItem.builder()
+                        .index(i).success(false).userId(null)
+                        .message(e.getMessage()).build());
+            }
         }
 
-        CourseEnrollment enrollment = enrollmentRepository.save(
-                CourseEnrollment.builder()
-                        .course(course)
-                        .user(user)
-                        .build());
-
-        return Map.of("userId", user.getId(), "enrollmentId", enrollment.getId());
+        return UserBatchResponse.builder()
+                .totalCount(requests.size()).successCount(success)
+                .failCount(requests.size() - success).results(results).build();
     }
 
     @Transactional
-    public Map<String, Object> updateUser(Long userId, UserUpdateRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+    public UserBatchResponse updateUsers(List<UserUpdateRequest> requests) {
+        List<BatchResultItem> results = new ArrayList<>();
+        int success = 0;
 
-        if (request.getName() != null) user.setName(request.getName());
-        if (request.getDepartment() != null) user.setDepartment(request.getDepartment());
-        if (request.getEmail() != null) user.setEmail(request.getEmail());
-        if (request.getPhone() != null) user.setPhone(request.getPhone());
+        for (int i = 0; i < requests.size(); i++) {
+            UserUpdateRequest req = requests.get(i);
+            try {
+                User user = userRepository.findById(req.getUserId())
+                        .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        return Map.of("userId", user.getId(), "message", "사용자 정보가 수정되었습니다.");
+                if (req.getName() != null) user.setName(req.getName());
+                if (req.getDepartment() != null) user.setDepartment(req.getDepartment());
+                if (req.getEmail() != null) user.setEmail(req.getEmail());
+                if (req.getPhone() != null) user.setPhone(req.getPhone());
+
+                results.add(BatchResultItem.builder()
+                        .index(i).success(true).userId(user.getId())
+                        .message("수정 성공").build());
+                success++;
+            } catch (Exception e) {
+                results.add(BatchResultItem.builder()
+                        .index(i).success(false).userId(req.getUserId())
+                        .message(e.getMessage()).build());
+            }
+        }
+
+        return UserBatchResponse.builder()
+                .totalCount(requests.size()).successCount(success)
+                .failCount(requests.size() - success).results(results).build();
     }
 
     @Transactional
-    public void deleteUser(Long userId, Long courseId) {
-        if (!enrollmentRepository.existsByCourseIdAndUserId(courseId, userId)) {
-            throw new BusinessException(HttpStatus.NOT_FOUND, "해당 과정에 등록된 사용자를 찾을 수 없습니다.");
+    public UserBatchResponse deleteUsers(Long courseId, List<Long> userIds) {
+        List<BatchResultItem> results = new ArrayList<>();
+        int success = 0;
+
+        for (int i = 0; i < userIds.size(); i++) {
+            Long userId = userIds.get(i);
+            try {
+                if (!enrollmentRepository.existsByCourseIdAndUserId(courseId, userId)) {
+                    results.add(BatchResultItem.builder()
+                            .index(i).success(false).userId(userId)
+                            .message("해당 과정에 등록된 사용자를 찾을 수 없습니다.").build());
+                    continue;
+                }
+                enrollmentRepository.deleteByCourseIdAndUserId(courseId, userId);
+                results.add(BatchResultItem.builder()
+                        .index(i).success(true).userId(userId)
+                        .message("삭제 성공").build());
+                success++;
+            } catch (Exception e) {
+                results.add(BatchResultItem.builder()
+                        .index(i).success(false).userId(userId)
+                        .message(e.getMessage()).build());
+            }
         }
-        enrollmentRepository.deleteByCourseIdAndUserId(courseId, userId);
+
+        return UserBatchResponse.builder()
+                .totalCount(userIds.size()).successCount(success)
+                .failCount(userIds.size() - success).results(results).build();
     }
 }

@@ -5,6 +5,7 @@ import lombok.Setter;
 
 @Getter @Setter
 public class UserUpdateRequest {
+    private Long userId;
     private String name;
     private String department;
     private String email;

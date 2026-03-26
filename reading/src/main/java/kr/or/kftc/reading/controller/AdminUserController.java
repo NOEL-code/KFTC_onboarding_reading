@@ -11,9 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
-
-@Tag(name = "관리자 - 사용자 관리", description = "사용자 등록/수정/삭제 API (JWT 필요)")
+@Tag(name = "관리자 - 사용자 관리", description = "사용자 일괄 등록/수정/삭제 API (JWT 필요)")
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
@@ -30,26 +28,21 @@ public class AdminUserController {
         return ResponseEntity.ok(excelService.uploadExcel(courseId, file));
     }
 
-    @Operation(summary = "사용자 개별 추가", description = "사용자를 개별적으로 추가하고 과정에 등록합니다.")
+    @Operation(summary = "사용자 일괄 추가", description = "여러 사용자를 한 번에 추가하고 과정에 등록합니다.")
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createUser(@RequestBody UserCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
+    public ResponseEntity<UserBatchResponse> createUsers(@RequestBody UserBatchCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUsers(request.getUsers()));
     }
 
-    @Operation(summary = "사용자 수정", description = "사용자 정보를 수정합니다.")
-    @PutMapping("/{userId}")
-    public ResponseEntity<Map<String, Object>> updateUser(
-            @PathVariable Long userId,
-            @RequestBody UserUpdateRequest request) {
-        return ResponseEntity.ok(userService.updateUser(userId, request));
+    @Operation(summary = "사용자 일괄 수정", description = "여러 사용자의 정보를 한 번에 수정합니다.")
+    @PutMapping
+    public ResponseEntity<UserBatchResponse> updateUsers(@RequestBody UserBatchUpdateRequest request) {
+        return ResponseEntity.ok(userService.updateUsers(request.getUsers()));
     }
 
-    @Operation(summary = "사용자 삭제", description = "과정에서 사용자를 삭제합니다.")
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<MessageResponse> deleteUser(
-            @PathVariable Long userId,
-            @RequestParam Long courseId) {
-        userService.deleteUser(userId, courseId);
-        return ResponseEntity.ok(new MessageResponse("사용자가 삭제되었습니다."));
+    @Operation(summary = "사용자 일괄 삭제", description = "여러 사용자를 과정에서 한 번에 삭제합니다.")
+    @DeleteMapping
+    public ResponseEntity<UserBatchResponse> deleteUsers(@RequestBody UserBatchDeleteRequest request) {
+        return ResponseEntity.ok(userService.deleteUsers(request.getCourseId(), request.getUserIds()));
     }
 }

@@ -339,9 +339,9 @@
             <a href="#api-17"><span class="method-tag-sm method-put">PUT</span>/api/admin/courses/{courseId}</a>
             <a href="#api-11"><span class="method-tag-sm method-post">POST</span>/api/admin/users</a>
             <a href="#api-18"><span class="method-tag-sm method-delete">DEL</span>/api/admin/courses/{courseId}</a>
-            <a href="#api-12"><span class="method-tag-sm method-put">PUT</span>/api/admin/users/{userId}</a>
+            <a href="#api-12"><span class="method-tag-sm method-put">PUT</span>/api/admin/users</a>
             <a href="#api-19"><span class="method-tag-sm method-get">GET</span>/api/admin/reports</a>
-            <a href="#api-13"><span class="method-tag-sm method-delete">DEL</span>/api/admin/users/{userId}</a>
+            <a href="#api-13"><span class="method-tag-sm method-delete">DEL</span>/api/admin/users</a>
             <a href="#api-20"><span class="method-tag-sm method-get">GET</span>/api/admin/reports/{reportId}/download</a>
             <a href="#api-14"><span class="method-tag-sm method-post">POST</span>/api/admin/templates</a>
             <a href="#api-21"><span class="method-tag-sm method-patch">PATCH</span>/api/admin/reports/approve</a>
@@ -656,73 +656,113 @@
         </div>
     </div>
 
-    <!-- API 11: 사용자 개별 추가 -->
+    <!-- API 11: 사용자 일괄 추가 -->
     <div class="api-card" id="api-11">
         <div class="api-header">
             <span class="method-tag method-post">POST</span>
             <span class="api-path">/api/admin/users</span>
-            <span class="api-desc">사용자 개별 추가</span>
+            <span class="api-desc">사용자 일괄 추가</span>
+            <span class="api-ref">기능 2.2.2</span>
+        </div>
+        <div class="api-body">
+            <h4>Request Body</h4>
+            <div class="code-block">{
+  <span class="key">"users"</span>: [
+    {
+      <span class="key">"courseId"</span>: <span class="num">3</span>,
+      <span class="key">"employeeNo"</span>: <span class="str">"20210001"</span>,
+      <span class="key">"name"</span>: <span class="str">"김민수"</span>,
+      <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
+      <span class="key">"email"</span>: <span class="str">"minsu.k@kftc.or.kr"</span>,
+      <span class="key">"phone"</span>: <span class="str">"010-1234-5678"</span>
+    },
+    {
+      <span class="key">"courseId"</span>: <span class="num">3</span>,
+      <span class="key">"employeeNo"</span>: <span class="str">"20210002"</span>,
+      <span class="key">"name"</span>: <span class="str">"이영희"</span>,
+      <span class="key">"department"</span>: <span class="str">"기획부"</span>,
+      <span class="key">"email"</span>: <span class="str">"yh.lee@kftc.or.kr"</span>,
+      <span class="key">"phone"</span>: <span class="str">"010-5678-1234"</span>
+    }
+  ]
+}</div>
+            <div class="api-note">배열로 여러 사용자를 한 번에 추가합니다. 일부 실패 시에도 나머지는 정상 처리되며, 건별 결과가 반환됩니다.</div>
+            <h4>Response — 201 Created</h4>
+            <div class="code-block">{
+  <span class="key">"totalCount"</span>: <span class="num">2</span>,
+  <span class="key">"successCount"</span>: <span class="num">2</span>,
+  <span class="key">"failCount"</span>: <span class="num">0</span>,
+  <span class="key">"results"</span>: [
+    { <span class="key">"index"</span>: <span class="num">0</span>, <span class="key">"success"</span>: <span class="bool">true</span>, <span class="key">"userId"</span>: <span class="num">25</span>, <span class="key">"message"</span>: <span class="str">"등록 성공"</span> },
+    { <span class="key">"index"</span>: <span class="num">1</span>, <span class="key">"success"</span>: <span class="bool">true</span>, <span class="key">"userId"</span>: <span class="num">26</span>, <span class="key">"message"</span>: <span class="str">"등록 성공"</span> }
+  ]
+}</div>
+        </div>
+    </div>
+
+    <!-- API 12: 사용자 일괄 수정 -->
+    <div class="api-card" id="api-12">
+        <div class="api-header">
+            <span class="method-tag method-put">PUT</span>
+            <span class="api-path">/api/admin/users</span>
+            <span class="api-desc">사용자 일괄 수정</span>
+            <span class="api-ref">기능 2.2.2</span>
+        </div>
+        <div class="api-body">
+            <h4>Request Body</h4>
+            <div class="code-block">{
+  <span class="key">"users"</span>: [
+    {
+      <span class="key">"userId"</span>: <span class="num">1</span>,
+      <span class="key">"name"</span>: <span class="str">"김민수(수정)"</span>,
+      <span class="key">"department"</span>: <span class="str">"경영지원부"</span>
+    },
+    {
+      <span class="key">"userId"</span>: <span class="num">2</span>,
+      <span class="key">"email"</span>: <span class="str">"yh.lee@kftc.or.kr"</span>,
+      <span class="key">"phone"</span>: <span class="str">"010-9999-8888"</span>
+    }
+  ]
+}</div>
+            <div class="api-note">각 항목에 userId를 포함하여 수정할 사용자를 지정합니다. 변경할 필드만 전달하면 됩니다.</div>
+            <h4>Response — 200 OK</h4>
+            <div class="code-block">{
+  <span class="key">"totalCount"</span>: <span class="num">2</span>,
+  <span class="key">"successCount"</span>: <span class="num">2</span>,
+  <span class="key">"failCount"</span>: <span class="num">0</span>,
+  <span class="key">"results"</span>: [
+    { <span class="key">"index"</span>: <span class="num">0</span>, <span class="key">"success"</span>: <span class="bool">true</span>, <span class="key">"userId"</span>: <span class="num">1</span>, <span class="key">"message"</span>: <span class="str">"수정 성공"</span> },
+    { <span class="key">"index"</span>: <span class="num">1</span>, <span class="key">"success"</span>: <span class="bool">true</span>, <span class="key">"userId"</span>: <span class="num">2</span>, <span class="key">"message"</span>: <span class="str">"수정 성공"</span> }
+  ]
+}</div>
+        </div>
+    </div>
+
+    <!-- API 13: 사용자 일괄 삭제 -->
+    <div class="api-card" id="api-13">
+        <div class="api-header">
+            <span class="method-tag method-delete">DELETE</span>
+            <span class="api-path">/api/admin/users</span>
+            <span class="api-desc">사용자 일괄 삭제</span>
             <span class="api-ref">기능 2.2.2</span>
         </div>
         <div class="api-body">
             <h4>Request Body</h4>
             <div class="code-block">{
   <span class="key">"courseId"</span>: <span class="num">3</span>,
-  <span class="key">"employeeNo"</span>: <span class="str">"20210001"</span>,
-  <span class="key">"name"</span>: <span class="str">"김민수"</span>,
-  <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
-  <span class="key">"email"</span>: <span class="str">"minsu.k@kftc.or.kr"</span>,
-  <span class="key">"phone"</span>: <span class="str">"010-1234-5678"</span>
+  <span class="key">"userIds"</span>: [<span class="num">1</span>, <span class="num">2</span>, <span class="num">5</span>]
 }</div>
-            <h4>Response — 201 Created</h4>
-            <div class="code-block">{
-  <span class="key">"userId"</span>: <span class="num">25</span>,
-  <span class="key">"enrollmentId"</span>: <span class="num">48</span>
-}</div>
-        </div>
-    </div>
-
-    <!-- API 12: 사용자 수정 -->
-    <div class="api-card" id="api-12">
-        <div class="api-header">
-            <span class="method-tag method-put">PUT</span>
-            <span class="api-path">/api/admin/users/{userId}</span>
-            <span class="api-desc">사용자 정보 수정</span>
-            <span class="api-ref">기능 2.2.2</span>
-        </div>
-        <div class="api-body">
-            <h4>Request Body</h4>
-            <div class="code-block">{
-  <span class="key">"name"</span>: <span class="str">"김민수"</span>,
-  <span class="key">"department"</span>: <span class="str">"IT개발부"</span>,
-  <span class="key">"email"</span>: <span class="str">"minsu.k@kftc.or.kr"</span>,
-  <span class="key">"phone"</span>: <span class="str">"010-1234-5678"</span>
-}</div>
+            <div class="api-note">courseId와 삭제할 사용자 ID 배열을 전달합니다. 해당 과정에서의 등록(enrollment)이 삭제됩니다.</div>
             <h4>Response — 200 OK</h4>
             <div class="code-block">{
-  <span class="key">"userId"</span>: <span class="num">1</span>,
-  <span class="key">"message"</span>: <span class="str">"사용자 정보가 수정되었습니다."</span>
-}</div>
-        </div>
-    </div>
-
-    <!-- API 13: 사용자 삭제 -->
-    <div class="api-card" id="api-13">
-        <div class="api-header">
-            <span class="method-tag method-delete">DELETE</span>
-            <span class="api-path">/api/admin/users/{userId}</span>
-            <span class="api-desc">사용자 삭제</span>
-            <span class="api-ref">기능 2.2.2</span>
-        </div>
-        <div class="api-body">
-            <h4>Query Parameters</h4>
-            <table class="param-table">
-                <tr><th>필드</th><th>타입</th><th>필수</th><th>설명</th></tr>
-                <tr><td>courseId</td><td><span class="type-tag">Long</span></td><td><span class="required">필수</span></td><td>해당 과정에서의 등록 삭제</td></tr>
-            </table>
-            <h4>Response — 200 OK</h4>
-            <div class="code-block">{
-  <span class="key">"message"</span>: <span class="str">"사용자가 삭제되었습니다."</span>
+  <span class="key">"totalCount"</span>: <span class="num">3</span>,
+  <span class="key">"successCount"</span>: <span class="num">2</span>,
+  <span class="key">"failCount"</span>: <span class="num">1</span>,
+  <span class="key">"results"</span>: [
+    { <span class="key">"index"</span>: <span class="num">0</span>, <span class="key">"success"</span>: <span class="bool">true</span>, <span class="key">"userId"</span>: <span class="num">1</span>, <span class="key">"message"</span>: <span class="str">"삭제 성공"</span> },
+    { <span class="key">"index"</span>: <span class="num">1</span>, <span class="key">"success"</span>: <span class="bool">true</span>, <span class="key">"userId"</span>: <span class="num">2</span>, <span class="key">"message"</span>: <span class="str">"삭제 성공"</span> },
+    { <span class="key">"index"</span>: <span class="num">2</span>, <span class="key">"success"</span>: <span class="bool">false</span>, <span class="key">"userId"</span>: <span class="num">5</span>, <span class="key">"message"</span>: <span class="str">"해당 과정에 등록된 사용자를 찾을 수 없습니다."</span> }
+  ]
 }</div>
         </div>
     </div>
