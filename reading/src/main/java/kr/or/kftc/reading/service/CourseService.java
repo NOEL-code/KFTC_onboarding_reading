@@ -37,6 +37,20 @@ public class CourseService {
         return CourseListResponse.builder().courses(items).build();
     }
 
+    public CourseDetailResponse getCourseDetail(Long courseId) {
+        ReadingCourse course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "독서과정을 찾을 수 없습니다."));
+
+        return CourseDetailResponse.builder()
+                .courseId(course.getId())
+                .name(course.getName())
+                .status(course.getStatus().name())
+                .startDate(course.getStartDate().toString())
+                .endDate(course.getEndDate().toString())
+                .description(course.getDescription())
+                .build();
+    }
+
     @Transactional
     public Map<String, Object> createCourse(CourseCreateRequest request) {
         ReadingCourse course = ReadingCourse.builder()
