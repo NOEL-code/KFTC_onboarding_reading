@@ -1,5 +1,8 @@
 package kr.or.kftc.reading.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.or.kftc.reading.dto.*;
 import kr.or.kftc.reading.service.ReportService;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Tag(name = "사용자 - 독후감", description = "독후감 제출/조회/수정/삭제 API")
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -15,7 +19,7 @@ public class ReportController {
 
     private final ReportService reportService;
 
-    // API 1: POST /api/reports — 독후감 제출
+    @Operation(summary = "독후감 제출", description = "HWP 파일과 함께 독후감을 제출합니다.")
     @PostMapping("/reports")
     public ResponseEntity<ReportResponse> submitReport(
             @RequestParam Long courseId,
@@ -26,7 +30,7 @@ public class ReportController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // API 2: GET /api/courses/{courseId}/reports — 과정별 독후감 목록
+    @Operation(summary = "과정별 독후감 목록", description = "특정 독서과정의 독후감 목록을 페이징 조회합니다.")
     @GetMapping("/courses/{courseId}/reports")
     public ResponseEntity<ReportListResponse> getReportsByCourse(
             @PathVariable Long courseId,
@@ -35,13 +39,13 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getReportsByCourse(courseId, page, size));
     }
 
-    // API 3: GET /api/reports/{reportId} — 독후감 상세 조회
+    @Operation(summary = "독후감 상세 조회", description = "독후감 ID로 상세 정보를 조회합니다.")
     @GetMapping("/reports/{reportId}")
     public ResponseEntity<ReportDetailResponse> getReportDetail(@PathVariable Long reportId) {
         return ResponseEntity.ok(reportService.getReportDetail(reportId));
     }
 
-    // API 5: GET /api/reports/search — 독후감 검색
+    @Operation(summary = "독후감 검색", description = "사번 또는 이름으로 독후감을 검색합니다.")
     @GetMapping("/reports/search")
     public ResponseEntity<ReportSearchResponse> searchReports(
             @RequestParam(required = false) String employeeNo,
@@ -49,7 +53,7 @@ public class ReportController {
         return ResponseEntity.ok(reportService.searchReports(employeeNo, name));
     }
 
-    // API 6: PUT /api/reports/{reportId} — 독후감 수정 (재제출)
+    @Operation(summary = "독후감 수정 (재제출)", description = "보완 요청된 독후감을 수정하여 재제출합니다.")
     @PutMapping("/reports/{reportId}")
     public ResponseEntity<ReportResponse> updateReport(
             @PathVariable Long reportId,
@@ -59,7 +63,7 @@ public class ReportController {
         return ResponseEntity.ok(reportService.updateReport(reportId, employeeNo, title, file));
     }
 
-    // API 7: DELETE /api/reports/{reportId} — 독후감 삭제
+    @Operation(summary = "독후감 삭제", description = "본인이 제출한 독후감을 삭제합니다.")
     @DeleteMapping("/reports/{reportId}")
     public ResponseEntity<MessageResponse> deleteReport(
             @PathVariable Long reportId,

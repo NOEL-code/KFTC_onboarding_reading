@@ -1,5 +1,7 @@
 package kr.or.kftc.reading.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.or.kftc.reading.entity.ReportTemplate;
 import kr.or.kftc.reading.service.TemplateService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+@Tag(name = "사용자 - 양식", description = "독후감 양식 다운로드 API")
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -20,7 +23,7 @@ public class TemplateController {
 
     private final TemplateService templateService;
 
-    // API 8: GET /api/templates/download — 양식 다운로드
+    @Operation(summary = "독후감 양식 다운로드", description = "현재 사용중인 HWP 양식 파일을 다운로드합니다.")
     @GetMapping("/templates/download")
     public ResponseEntity<byte[]> downloadTemplate() {
         ReportTemplate template = templateService.getActiveTemplate();
