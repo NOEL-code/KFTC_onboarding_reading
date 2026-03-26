@@ -46,11 +46,11 @@ public class UserService {
             throw new BusinessException(HttpStatus.CONFLICT, "이미 해당 과정에 등록된 사용자입니다.");
         }
 
-        CourseEnrollment enrollment = CourseEnrollment.builder()
-                .course(course)
-                .user(user)
-                .build();
-        enrollmentRepository.save(enrollment);
+        CourseEnrollment enrollment = enrollmentRepository.save(
+                CourseEnrollment.builder()
+                        .course(course)
+                        .user(user)
+                        .build());
 
         return Map.of("userId", user.getId(), "enrollmentId", enrollment.getId());
     }
